@@ -3,6 +3,7 @@
 #include "sercom_usart.h"
 #include "plib_tcc0.h"
 #include "sercom_spi_master.h"
+#include "plib_nvic.h"
 
 void spi_callback(uintptr_t context) {
     const char welcome_str[] = "Ding dong\r\n";
@@ -10,12 +11,10 @@ void spi_callback(uintptr_t context) {
 }
 
 int main(void) {
-
-    //todo
-//    NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3);
-
     PORT_Initialize();
     CLOCK_Initialize();
+
+    NVIC_Initialize();
 
     TCC0_PWMInitialize();
     TCC0_PWM_Enable(true); //todo remove
@@ -38,7 +37,6 @@ int main(void) {
             if(SERCOM_USART_Read(FTDI, &x, 1)) {
                 SERCOM_USART_WriteByte(FTDI, x);
                 do {} while (!SERCOM_USART_TransmitComplete(FTDI));
-
             }
         }
     }

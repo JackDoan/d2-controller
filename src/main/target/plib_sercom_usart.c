@@ -184,29 +184,26 @@ void SERCOM_USART_TransmitterDisable( sercom_registers_t* sercom )
     while((sercom->USART_INT.SERCOM_SYNCBUSY) != 0U) {}
 }
 
-bool SERCOM_USART_Write(sercom_registers_t* sercom, const uint8_t *buffer, const size_t size ) {
+bool SERCOM_USART_Write(sercom_registers_t* sercom, const void *buffer, const size_t size ) {
     if(buffer == NULL)
         return false;
 
     /* Blocks while buffer is being transferred */
-    for(size_t i = 0; i < size; i++)
-    {
+    for(size_t i = 0; i < size; i++) {
         /* Check if USART is ready for new data */
         while(!SERCOM_USART_TransmitterIsReady(sercom)) {}
-        sercom->USART_INT.SERCOM_DATA = buffer[i];
+        sercom->USART_INT.SERCOM_DATA = ((uint8_t*)buffer)[i];
     }
 
     return true;
 }
 
 
-bool SERCOM_USART_TransmitterIsReady( sercom_registers_t* sercom )
-{
+bool SERCOM_USART_TransmitterIsReady( sercom_registers_t* sercom ) {
     return (sercom->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_DRE_Msk) == SERCOM_USART_INT_INTFLAG_DRE_Msk;
 }
 
-void SERCOM_USART_WriteByte(sercom_registers_t* sercom, int data )
-{
+void SERCOM_USART_WriteByte(sercom_registers_t* sercom, int data ) {
     /* Check if USART is ready for new data */
     while(!SERCOM_USART_TransmitterIsReady(sercom)) {}
     sercom->USART_INT.SERCOM_DATA = (uint16_t)data;

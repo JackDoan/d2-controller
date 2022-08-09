@@ -68,7 +68,7 @@ void SERCOM0_USART_TransmitterEnable( void );
 
 void SERCOM0_USART_TransmitterDisable( void );
 
-bool SERCOM_USART_Write(sercom_registers_t*, const uint8_t* buffer, size_t size );
+bool SERCOM_USART_Write(sercom_registers_t*, const void* buffer, size_t size );
 
 bool SERCOM_USART_TransmitComplete( sercom_registers_t* sercom );
 
