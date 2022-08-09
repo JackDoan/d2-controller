@@ -1,0 +1,1 @@
+target_pic32cm_mc00(AAA_D2 SKIP_RELEASES)
