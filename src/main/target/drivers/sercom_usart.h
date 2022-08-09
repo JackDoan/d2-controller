@@ -60,37 +60,46 @@
 // *****************************************************************************
 // *****************************************************************************
 
-void SERCOM_USART_Initialize(sercom_registers_t* sercom );
+void SERCOM_USART_Initialize(sercom_registers_t* sercom);
 
-bool SERCOM0_USART_SerialSetup( USART_SERIAL_SETUP * serialSetup, uint32_t clkFrequency );
+bool SERCOM0_USART_SerialSetup(USART_SERIAL_SETUP * serialSetup, uint32_t clkFrequency);
 
-void SERCOM0_USART_TransmitterEnable( void );
+void SERCOM0_USART_TransmitterEnable(void);
 
-void SERCOM0_USART_TransmitterDisable( void );
+void SERCOM0_USART_TransmitterDisable(void);
 
-bool SERCOM_USART_Write(sercom_registers_t*, const void* buffer, size_t size );
-
-bool SERCOM_USART_TransmitComplete( sercom_registers_t* sercom );
-
-
-bool SERCOM_USART_TransmitterIsReady( sercom_registers_t* sercom );
-
-void SERCOM_USART_WriteByte(sercom_registers_t* sercom, int data );
+bool SERCOM_USART_Write(sercom_registers_t* sercom, const void *buffer, const size_t size);
+bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const size_t size);
+void SERCOM_USART_TX_Wait(sercom_registers_t* sercom);
+void SERCOM_USART_RX_Wait(sercom_registers_t* sercom);
+bool SERCOM_USART_TransmitComplete(sercom_registers_t* sercom);
 
 
-void SERCOM_USART_ReceiverEnable( sercom_registers_t* sercom );
+bool SERCOM_USART_TransmitterIsReady(sercom_registers_t* sercom);
 
-void SERCOM_USART_ReceiverDisable( sercom_registers_t* sercom );
+void SERCOM_USART_WriteByte(sercom_registers_t* sercom, int data);
 
-bool SERCOM_USART_Read(sercom_registers_t* sercom, void *buffer, const size_t size );
 
-bool SERCOM_USART_ReceiverIsReady( sercom_registers_t* sercom );
+void SERCOM_USART_ReceiverEnable(sercom_registers_t* sercom);
 
-int SERCOM_USART_ReadByte( sercom_registers_t* sercom );
+void SERCOM_USART_ReceiverDisable(sercom_registers_t* sercom);
 
-USART_ERROR SERCOM0_USART_ErrorGet( void );
+bool SERCOM_USART_Read(sercom_registers_t* sercom, void *buffer, const size_t size);
 
-uint32_t SERCOM0_USART_FrequencyGet( void );
+bool SERCOM_USART_ReadIsBusy(sercom_registers_t* sercom);
+size_t SERCOM_USART_ReadCountGet(sercom_registers_t* sercom);
+bool SERCOM_USART_ReadAbort(sercom_registers_t* sercom);
+
+
+
+
+bool SERCOM_USART_ReceiverIsReady(sercom_registers_t* sercom);
+
+int SERCOM_USART_ReadByte(sercom_registers_t* sercom);
+
+USART_ERROR SERCOM0_USART_ErrorGet(void);
+
+uint32_t SERCOM0_USART_FrequencyGet(void);
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility

@@ -380,12 +380,12 @@ main_sources(PIC32CM_MC00_SRC
     ../vendor/PIC32CM6408MC00032/gcc/system_pic32cm6408mc00032.c
     ../vendor/PIC32CM6408MC00032/gcc/system_pic32cm6408mc00032.c
 
-    target/plib_port.c
-    target/plib_clock.c
-    target/plib_sercom_usart.c
-    target/plib_tcc0.c
-    target/sercom_spi_master.c
-    target/plib_nvic.c
+    target/drivers/plib_port.c
+    target/drivers/plib_clock.c
+    target/drivers/plib_sercom_usart.c
+    target/drivers/plib_tcc0.c
+    target/drivers/sercom_spi_master.c
+    target/drivers/plib_nvic.c
 #
 #    drivers/adc_stm32f4xx.c
 #    drivers/adc_stm32f4xx.c
@@ -401,7 +401,7 @@ main_sources(PIC32CM_MC00_SRC
 )
 
 set(PIC32CM_MC00_INCLUDE_DIRS
-    "target"
+    "drivers"
     "${CMSIS_INCLUDE_DIR}"
 )
 

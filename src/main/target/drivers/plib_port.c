@@ -290,7 +290,7 @@ void PORT_PinGPIOConfig(PORT_PIN pin)
     ((port_group_registers_t*)group)->PORT_PINCFG[pin_num] &= ((uint8_t)(~PORT_PINCFG_PMUXEN_Msk));
 }
 
-void inline motors_set_enable(bool enabled) {
+inline void motors_set_enable(bool enabled) {
     const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
     PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
 }

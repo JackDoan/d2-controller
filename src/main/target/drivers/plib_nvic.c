@@ -10,6 +10,10 @@ void NVIC_Initialize( void ) {
      * from within the "Interrupt Manager" of MHC. */
     NVIC_SetPriority(SERCOM3_IRQn, 3); //SPI
     NVIC_EnableIRQ(SERCOM3_IRQn);
+    NVIC_SetPriority(SERCOM1_IRQn, 3); //FTDI
+    NVIC_EnableIRQ(SERCOM1_IRQn);
+    NVIC_SetPriority(SERCOM0_IRQn, 3); //RX
+    NVIC_EnableIRQ(SERCOM0_IRQn);
 }
 
 void NVIC_INT_Enable( void )
