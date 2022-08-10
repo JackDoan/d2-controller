@@ -6,10 +6,10 @@
 #include "sercom_spi_master.h"
 #include "plib_nvic.h"
 char dingdong[32] = {0};
-uint8_t spi_rx[4] = {0};
+uint8_t spi_rx[2] = {0};
 
 void spi_callback(uintptr_t context) {
-    sprintf(dingdong, "%x %x %x %x\r\n", spi_rx[0], spi_rx[1], spi_rx[2], spi_rx[3]);
+    sprintf(dingdong, "%02x %02x\r\n", spi_rx[0], spi_rx[1]);
     serial_puts(dingdong);
 }
 
@@ -52,7 +52,7 @@ int main(void) {
                     PORT_PinToggle(DIR3);
                     break;
                 case 's':
-                    SERCOM_SPI_WriteRead(CS3, spi_tx, sizeof(spi_tx), spi_rx, sizeof(spi_rx));
+                    SERCOM_SPI_WriteRead(CS3, spi_tx, 2, spi_rx, 2);
                     break;
             }
         }
