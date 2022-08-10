@@ -38,7 +38,7 @@ void TCC0_PWMInitialize(void)
     TCC0_REGS->TCC_CC[1] = 1000U;
     TCC0_REGS->TCC_CC[2] = 1000U;
     TCC0_REGS->TCC_CC[3] = 1000U;
-    TCC0_REGS->TCC_PER = 2400U;
+    TCC0_REGS->TCC_PER = 2047U;  //hmm making this the same as sbus seems... handy
 
     TCC0_REGS->TCC_INTENSET = TCC_INTENSET_OVF_Msk;
 

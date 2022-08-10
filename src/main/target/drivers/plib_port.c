@@ -28,16 +28,16 @@ void PORT_Initialize(void) {
 
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA07, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA08, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA09, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA08, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0 //todo switch these?
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA09, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1 --actually hooked up
 
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA16, PERIPHERAL_FUNCTION_C); //FTDI Sercom1 Pad 0
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA17, PERIPHERAL_FUNCTION_C); //FTDI Sercom1 Pad 1
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA10, PERIPHERAL_FUNCTION_F); //pwm1 TCC0/ WO[2]
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA11, PERIPHERAL_FUNCTION_F); //pwm2 TCC0/ WO[3]
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA15, PERIPHERAL_FUNCTION_F); //pwm3 TCC0/ WO[5]
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA14, PERIPHERAL_FUNCTION_F); //pwm4 TCC0/ WO[4]
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA10, PERIPHERAL_FUNCTION_F); //pwm1 TCC0/ WO[2] = CC1
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA11, PERIPHERAL_FUNCTION_F); //pwm2 TCC0/ WO[3] = CC0
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA15, PERIPHERAL_FUNCTION_F); //pwm3 TCC0/ WO[5] = CC2
+    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA14, PERIPHERAL_FUNCTION_F); //pwm4 TCC0/ WO[4] = CC3
 
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA22, PERIPHERAL_FUNCTION_C); //mosi Sercom3 pad0
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA23, PERIPHERAL_FUNCTION_C); //sck  Sercom3 pad1
@@ -288,9 +288,4 @@ void PORT_PinGPIOConfig(PORT_PIN pin)
 
     /* Disable peripheral control of the pin */
     ((port_group_registers_t*)group)->PORT_PINCFG[pin_num] &= ((uint8_t)(~PORT_PINCFG_PMUXEN_Msk));
-}
-
-inline void motors_set_enable(bool enabled) {
-    const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
-    PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
 }

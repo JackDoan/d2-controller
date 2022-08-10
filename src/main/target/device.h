@@ -29,4 +29,13 @@
 
 void motors_set_enable(bool enabled);
 
+enum motor_channel {
+    MOTOR1,
+    MOTOR2,
+    MOTOR3,
+    MOTOR4
+};
+
+void motor_enable(enum motor_channel channel, bool enable);
+
 #endif //INAV_DEVICE_H

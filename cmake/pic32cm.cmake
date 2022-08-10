@@ -48,7 +48,8 @@ endif()
 
 set(PIC32CM_LINK_OPTIONS
         -nostartfiles
-        --specs=nano.specs
+        -specs=nano.specs
+        -specs=nosys.specs
         -static
         -Wl,-gc-sections
         -Wl,-L${PIC32CM_LINKER_DIR}
@@ -386,6 +387,7 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/plib_tcc0.c
     target/drivers/sercom_spi_master.c
     target/drivers/plib_nvic.c
+    target/device.c
 #
 #    drivers/adc_stm32f4xx.c
 #    drivers/adc_stm32f4xx.c
