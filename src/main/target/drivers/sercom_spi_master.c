@@ -2,7 +2,7 @@
 #include "sercom_spi_master.h"
 
 /* SERCOM1 SPI baud value for 1000000 Hz baud rate */
-#define SERCOM_SPIM_BAUD_VALUE         (23UL)*2 //todo fix board
+#define SERCOM_SPIM_BAUD_VALUE (23UL)
 
 /*Global object to save SPI Exchange related data  */
 static SPI_OBJECT sercomSPIObj;

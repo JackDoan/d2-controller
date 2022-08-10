@@ -20,7 +20,7 @@ void TCC0_PWMInitialize(void)
     TCC0_Sync(TCC_SYNCBUSY_SWRST_Msk);
 
     /* Clock prescaler */
-    TCC0_REGS->TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV1 ;
+    TCC0_REGS->TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV2 ;
     TCC0_REGS->TCC_WEXCTRL = TCC_WEXCTRL_OTMX(0UL);
     /* Dead time configurations */
     TCC0_REGS->TCC_WEXCTRL |=
