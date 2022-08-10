@@ -1,81 +1,33 @@
-/*******************************************************************************
-  SERIAL COMMUNICATION SERIAL PERIPHERAL INTERFACE (SERCOM_SPI ) PLIB
-
-  Company
-    Microchip Technology Inc.
-
-  File Name
-    plib_sercom1_spi_master.h
-
-  Summary
-   SERCOM_SPI Master PLIB Header File.
-
-  Description
-    This file defines the interface to the SERCOM SPI peripheral library.
-    This library provides access to and control of the associated
-    peripheral instance.
-
-  Remarks:
-    None.
-
-*******************************************************************************/
-
-// DOM-IGNORE-BEGIN
-/*******************************************************************************
-* Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
-*
-* Subject to your compliance with these terms, you may use Microchip software
-* and any derivatives exclusively with Microchip products. It is your
-* responsibility to comply with third party license terms applicable to your
-* use of third party software (including open source software) that may
-* accompany Microchip software.
-*
-* THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-* EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-* WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-* PARTICULAR PURPOSE.
-*
-* IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-* INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-* WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-* BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-* FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-* ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-* THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-*******************************************************************************/
-// DOM-IGNORE-END
-
 #ifndef PLIB_SERCOM_SPI_MASTER_H // Guards against multiple inclusion
 #define PLIB_SERCOM_SPI_MASTER_H
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files
-// *****************************************************************************
-// *****************************************************************************
-/* This section lists the other files that are included in this file.
-*/
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <device.h>
+#include "sercom_spi_master.h"
+#include "plib_port.h"
 
-#include "plib_sercom_spi_master_common.h"
-
-// DOM-IGNORE-BEGIN
 #ifdef __cplusplus // Provide C++ Compatibility
-
 extern "C" {
-
 #endif
 
-// DOM-IGNORE-END
+typedef void (*SERCOM_SPI_CALLBACK)(uintptr_t context);
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Interface Routines
-// *****************************************************************************
-// *****************************************************************************
-
-/* The following functions make up the methods (set of possible operations) of
-this interface.
-*/
+typedef struct {
+    void *                   txBuffer;
+    void *                   rxBuffer;
+    size_t                   txSize;
+    size_t                   rxSize;
+    size_t                   dummySize;
+    size_t                   rxCount;
+    size_t                   txCount;
+    bool                     transferIsBusy;
+    SERCOM_SPI_CALLBACK      callback;
+    uintptr_t                context;
+    uint32_t                 status;
+    PORT_PIN                 cs_line;
+} SPI_OBJECT;
 
 // *****************************************************************************
 /* Function:
@@ -112,69 +64,6 @@ this interface.
 
 void SERCOM_SPI_Initialize (sercom_registers_t* sercom);
 
-
-// *****************************************************************************
-/* Function:
-    bool SERCOM_SPI_TransferSetup(SPI_TRANSFER_SETUP *setup,
-                                                uint32_t spiSourceClock);
-
- Summary:
-    Configure SERCOM SPI operational parameters at run time.
-
-  Description:
-    This function allows the application to change the SERCOM SPI operational
-    parameter at run time. The application can thus override the MHC defined
-    configuration for these parameters. The parameter are specified via the
-    SPI_TRANSFER_SETUP type setup parameter. Each member of this parameter
-    should be initialized to the desired value.
-
-    The application may feel need to call this function in situation where
-    multiple SPI slaves, each with different operation paramertes, are connected
-    to one SPI master. This function can thus be used to setup the SPI Master to
-    meet the communication needs of the slave.
-
-    Calling this function will affect any ongoing communication. The application
-    must thus ensure that there is no on-going communication on the SPI before
-    calling this function.
-
-  Precondition:
-    SERCOM SERCOM1 SPI must first be initialized using SERCOM_SPI_Initialize().
-
-  Parameters :
-    setup - pointer to the data structure of type SPI_TRANSFER_SETUP containing
-    the operation parameters. Each operation parameter must be specified even if
-    the parameter does not need to change.
-
-    spiSourceClock - Current value of GCLK frequency feeding the SERCOM1 core.
-
-  Returns:
-    true - setup was successful.
-
-    false - if spiSourceClock and spi clock frequencies are such that resultant
-    baud value is out of the possible range.
-
-  Example:
-    <code>
-        SPI_TRANSFER_SETUP setup;
-        setup.clockFrequency = 1000000;
-        setup.clockPhase = SPI_CLOCK_PHASE_TRAILING_EDGE;
-        setup.clockPolarity = SPI_CLOCK_POLARITY_IDLE_LOW;
-        setup.dataBits = SPI_DATA_BITS_8;
-
-        Assuming 20 MHz as peripheral Master clock frequency
-        if (SERCOM_SPI_TransferSetup (&setup, 20000000) == false)
-        {
-            this means setup could not be done, debug the reason.
-        }
-
-    </code>
-
-  Remarks:
-    The application would need to call this function only if the operational
-    parameter need to be different than the ones configured in MHC.
-*/
-
-bool SERCOM_SPI_TransferSetup(sercom_registers_t* sercom, SPI_TRANSFER_SETUP *setup, uint32_t spiSourceClock);
 
 
 // *****************************************************************************
@@ -295,7 +184,7 @@ bool SERCOM_SPI_TransferSetup(sercom_registers_t* sercom, SPI_TRANSFER_SETUP *se
     None.
 */
 
-bool SERCOM_SPI_WriteRead (sercom_registers_t* sercom, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize);
+bool SERCOM_SPI_WriteRead(PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize);
 
 // *****************************************************************************
 /* Function:

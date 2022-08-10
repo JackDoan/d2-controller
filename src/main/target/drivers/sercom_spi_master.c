@@ -1,9 +1,6 @@
 #include "interrupts.h"
 #include "sercom_spi_master.h"
 
-/* SERCOM1 clk freq value for the baud calculation */
-#define SERCOM_Frequency      (48000000UL)/2 //todo fix board
-
 /* SERCOM1 SPI baud value for 1000000 Hz baud rate */
 #define SERCOM_SPIM_BAUD_VALUE         (23UL)*2 //todo fix board
 
@@ -23,6 +20,7 @@ void SERCOM_SPI_Initialize(sercom_registers_t* sercom) {
     sercomSPIObj.transferIsBusy = false ;
     sercomSPIObj.txSize = 0U;
     sercomSPIObj.rxSize = 0U;
+    sercomSPIObj.cs_line = 0;
 
     /* Selection of the Character Size and Receiver Enable */
     sercom->SPIM.SERCOM_CTRLB =
@@ -42,93 +40,12 @@ void SERCOM_SPI_Initialize(sercom_registers_t* sercom) {
             SERCOM_SPIM_CTRLA_DORD_LSB |
             SERCOM_SPIM_CTRLA_CPOL_IDLE_LOW |
             SERCOM_SPIM_CTRLA_CPHA_TRAILING_EDGE |
-            SERCOM_SPIM_CTRLA_DOPO_0x2 | /*sck on pad 1, miso on pad3 */
-            SERCOM_SPIM_CTRLA_DIPO_PAD0 | /*mosi on pad 0*/
+            SERCOM_SPIM_CTRLA_DOPO_0x0 | /*sck on pad 1, mosi on pad0 */
+            SERCOM_SPIM_CTRLA_DIPO_PAD3 | /*miso on pad 3*/
             SERCOM_SPIM_CTRLA_ENABLE_Msk;
 
     spi_sync(sercom);
 }
-
-// *****************************************************************************
-/* Function:
-    bool SERCOM_SPI_TransferSetup(SPI_TRANSFER_SETUP *setup,
-                                                uint32_t spiSourceClock);
-
- Summary:
-    Configure SERCOM SPI operational parameters at run time.
-
-  Description:
-    This function allows the application to change the SERCOM SPI operational
-    parameter at run time. The application can thus override the MHC defined
-    configuration for these parameters. The parameter are specified via the
-    SPI_TRANSFER_SETUP type setup parameter. Each member of this parameter
-    should be initialized to the desired value.
-
-    The application may feel need to call this function in situation where
-    multiple SPI slaves, each with different operation parameters, are connected
-    to one SPI master. This function can thus be used to setup the SPI Master to
-    meet the communication needs of the slave.
-
-    Calling this function will affect any ongoing communication. The application
-    must thus ensure that there is no on-going communication on the SPI before
-    calling this function.
-
-*/
-
-bool SERCOM_SPI_TransferSetup(sercom_registers_t* sercom, SPI_TRANSFER_SETUP *setup, uint32_t spiSourceClock)
-{
-    uint32_t baudValue = 0U;
-
-    bool statusValue = false;
-
-    if(spiSourceClock == 0U)
-    {
-        /* Fetch Master Clock Frequency directly */
-        spiSourceClock = SERCOM_Frequency;
-    }
-
-    /* Disable the SPI Module */
-    sercom->SPIM.SERCOM_CTRLA &= ~(SERCOM_SPIM_CTRLA_ENABLE_Msk);
-
-    spi_sync(sercom);
-
-    if(setup != NULL)
-    {
-        if (setup->clockFrequency <= spiSourceClock/2U)
-        {
-            baudValue = (spiSourceClock/(2U*(setup->clockFrequency))) - 1U;
-
-            /* Set the lowest possible baud */
-            if (baudValue >= 255U)
-            {
-                baudValue = 255U;
-            }
-
-            /* Selection of the Clock Polarity and Clock Phase */
-            sercom->SPIM.SERCOM_CTRLA &= ~(SERCOM_SPIM_CTRLA_CPOL_Msk | SERCOM_SPIM_CTRLA_CPHA_Msk);
-            sercom->SPIM.SERCOM_CTRLA |= (uint32_t)setup->clockPolarity | (uint32_t)setup->clockPhase;
-
-            /* Selection of the Baud Value */
-            sercom->SPIM.SERCOM_BAUD = (uint8_t)baudValue;
-
-            /* Selection of the Character Size */
-            sercom->SPIM.SERCOM_CTRLB &= ~SERCOM_SPIM_CTRLB_CHSIZE_Msk;
-            sercom->SPIM.SERCOM_CTRLB |= (uint32_t)setup->dataBits;
-
-            spi_sync(sercom);
-
-            statusValue = true;
-        }
-    }
-
-    /* Enabling the SPI Module */
-    sercom->SPIM.SERCOM_CTRLA |= SERCOM_SPIM_CTRLA_ENABLE_Msk;
-
-    spi_sync(sercom);
-
-    return statusValue;
-}
-
 
 // *****************************************************************************
 /* Function:
@@ -215,10 +132,8 @@ bool SERCOM_SPI_IsTransmitterBusy(sercom_registers_t* sercom)
     transferring all the data.  This indicates that the operation has been
     completed.
 
-    When "Interrupt Mode" option is selected in MHC, the function will be
-    non-blocking in nature.  The function returns immediately. The data transfer
-    process continues in the peripheral interrupt.  The application specified
-    transmit and receive buffer  are ownerd by the library until the data
+    The function returns immediately. The data transfer process continues in the peripheral interrupt.
+    The application specified transmit and receive buffer  are owned by the library until the data
     transfer is complete and should not be modified by the application till the
     transfer is complete.  Only one transfer is allowed at any time. The
     Application can use a callback function or a polling function to check for
@@ -230,8 +145,9 @@ bool SERCOM_SPI_IsTransmitterBusy(sercom_registers_t* sercom)
     Refer plib_sercom1_spi.h file for more information.
 */
 
-bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize)
+bool SERCOM_SPI_WriteRead(PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize)
 {
+    sercom_registers_t* sercom = SPI;
     /* Verify the request */
     if (
         (txSize <= 0U) ||
@@ -247,6 +163,7 @@ bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, void* pTransmitData, size_
     sercomSPIObj.rxCount = 0U;
     sercomSPIObj.txCount = 0U;
     sercomSPIObj.dummySize = 0U;
+    sercomSPIObj.cs_line = cs_line;
 
     sercomSPIObj.txSize = txSize;
     sercomSPIObj.rxSize = rxSize;
@@ -254,8 +171,7 @@ bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, void* pTransmitData, size_
     sercomSPIObj.transferIsBusy = true;
 
     /* Flush out any unread data in SPI read buffer */
-    while((sercom->SPIM.SERCOM_INTFLAG & SERCOM_SPIM_INTFLAG_RXC_Msk) == SERCOM_SPIM_INTFLAG_RXC_Msk)
-    {
+    while((sercom->SPIM.SERCOM_INTFLAG & SERCOM_SPIM_INTFLAG_RXC_Msk) == SERCOM_SPIM_INTFLAG_RXC_Msk) {
         uint32_t dummyData = sercom->SPIM.SERCOM_DATA;
         (void)dummyData;
     }
@@ -266,6 +182,8 @@ bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, void* pTransmitData, size_
     if(sercomSPIObj.rxSize > sercomSPIObj.txSize) {
         sercomSPIObj.dummySize = sercomSPIObj.rxSize - sercomSPIObj.txSize;
     }
+
+    PORT_PinClear(sercomSPIObj.cs_line);
 
     /* Start the first write here itself, rest will happen in ISR context */
     if(sercomSPIObj.txCount < sercomSPIObj.txSize) {
@@ -286,30 +204,6 @@ bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, void* pTransmitData, size_
     return true;
 }
 
-bool SERCOM_SPI_Write(sercom_registers_t* sercom, void* pTransmitData, size_t txSize)
-{
-    return SERCOM_SPI_WriteRead(sercom, pTransmitData, txSize, NULL, 0U);
-}
-
-bool SERCOM_SPI_Read(sercom_registers_t* sercom, void* pReceiveData, size_t rxSize)
-{
-    return SERCOM_SPI_WriteRead(sercom, NULL, 0U, pReceiveData, rxSize);
-}
-
-// *****************************************************************************
-/* Function:
-    void SERCOM_SPI_InterruptHandler(void);
-
-  Summary:
-    Handler that handles the SPI interrupts
-
-  Description:
-    This Function is called from the handler to handle the exchange based on the
-    Interrupts.
-
-  Remarks:
-    Refer plib_sercom1_spi.h file for more information.
-*/
 
 void SERCOM_SPI_InterruptHandler(void) {
     static bool isLastByteTransferInProgress = false;
@@ -372,7 +266,7 @@ void SERCOM_SPI_InterruptHandler(void) {
         ) {
             if(sercomSPIObj.rxCount == sercomSPIObj.rxSize) {
                 sercomSPIObj.transferIsBusy = false;
-
+                PORT_PinSet(sercomSPIObj.cs_line);
                 /* Disable the Data Register empty and Receive Complete Interrupt flags */
                 sercom->SPIM.SERCOM_INTENCLR = (uint8_t)(SERCOM_SPIM_INTENCLR_DRE_Msk | SERCOM_SPIM_INTENCLR_RXC_Msk | SERCOM_SPIM_INTENSET_TXC_Msk);
 

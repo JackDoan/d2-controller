@@ -1,3 +1,4 @@
+#include <string.h>
 #include "interrupts.h"
 #include "sercom_usart.h"
 
@@ -308,6 +309,10 @@ bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const
     usart_tx_work(sercom, obj);
     sercom->USART_INT.SERCOM_INTENSET = (uint8_t) SERCOM_USART_INT_INTFLAG_DRE_Msk;
     return true;
+}
+
+void serial_puts(void *buffer) {
+    SERCOM_USART_Write_Nonblock(FTDI, buffer, strlen(buffer));
 }
 
 void SERCOM_USART_TX_Wait(sercom_registers_t* sercom) {

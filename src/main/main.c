@@ -5,13 +5,12 @@
 #include "plib_tcc0.h"
 #include "sercom_spi_master.h"
 #include "plib_nvic.h"
-char dingdong[] = "Ding dong    \r\n";
+char dingdong[32] = {0};
 uint8_t spi_rx[4] = {0};
 
 void spi_callback(uintptr_t context) {
-    PORT_PinSet(CS3);
-    sprintf(dingdong, "%x %x %x %x", spi_rx[0], spi_rx[1], spi_rx[2], spi_rx[3]);
-    SERCOM_USART_Write_Nonblock((sercom_registers_t*)context, dingdong, sizeof(dingdong)-1);
+    sprintf(dingdong, "%x %x %x %x\r\n", spi_rx[0], spi_rx[1], spi_rx[2], spi_rx[3]);
+    serial_puts(dingdong);
 }
 
 uint8_t x[4] = {0};
@@ -29,14 +28,14 @@ int main(void) {
 
     SERCOM_SPI_CallbackRegister(spi_callback, (uintptr_t)FTDI);
 
-    const char welcome_str[] = "D2 Motherboard\r\n";
+    char welcome_str[] = "D2 Motherboard\r\n";
 
     SERCOM_USART_Write_Nonblock(FTDI, welcome_str, sizeof(welcome_str)-1);
+    serial_puts(welcome_str);
     SERCOM_USART_TX_Wait(FTDI);
     uint8_t spi_tx[4] = {0b00001110, 0b00000000, 0, 0};
 
-    PORT_PinClear(CS3);
-    SERCOM_SPI_WriteRead(SPI, spi_tx, sizeof(spi_tx), spi_rx, sizeof(spi_rx));
+    while(SERCOM_SPI_IsBusy(SPI)) {}
     for(;;) {
         if(SERCOM_USART_Read(FTDI, x, 1)) {
             SERCOM_USART_Write_Nonblock(FTDI, x, 1);
@@ -51,6 +50,9 @@ int main(void) {
                     break;
                 case 'd':
                     PORT_PinToggle(DIR3);
+                    break;
+                case 's':
+                    SERCOM_SPI_WriteRead(CS3, spi_tx, sizeof(spi_tx), spi_rx, sizeof(spi_rx));
                     break;
             }
         }
