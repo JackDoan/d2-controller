@@ -37,5 +37,6 @@ enum motor_channel {
 };
 
 void motor_enable(enum motor_channel channel, bool enable);
+void motor_set_speed(enum motor_channel channel, int sbus_val);
 
 #endif //INAV_DEVICE_H

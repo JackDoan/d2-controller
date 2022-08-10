@@ -387,6 +387,7 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/plib_tcc0.c
     target/drivers/sercom_spi_master.c
     target/drivers/plib_nvic.c
+    target/drivers/plib_dmac.c
     target/device.c
 #
 #    drivers/adc_stm32f4xx.c

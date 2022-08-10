@@ -1,6 +1,7 @@
 #include <string.h>
 #include "interrupts.h"
 #include "sercom_usart.h"
+#include "plib_dmac.h"
 
 /* SERCOM USART baud value for 115200 Hz baud rate */
 #define SERCOM_USART_INT_BAUD_VALUE            (63019UL)*2
@@ -312,7 +313,8 @@ bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const
 }
 
 void serial_puts(void *buffer) {
-    SERCOM_USART_Write_Nonblock(FTDI, buffer, strlen(buffer));
+    //SERCOM_USART_Write_Nonblock(FTDI, buffer, strlen(buffer));
+    DMAC_ChannelTransfer(DMAC_CHANNEL_0, buffer, (const void *)&FTDI->USART_INT.SERCOM_DATA, strlen(buffer));
 }
 
 void SERCOM_USART_TX_Wait(sercom_registers_t* sercom) {

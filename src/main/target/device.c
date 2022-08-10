@@ -12,17 +12,19 @@ const int sbus_min = 0;
 const int sbus_center_deadband = 5;
 
 static PORT_PIN enable_pins[] = {EN1, EN2, EN3, EN4};
-
+static volatile uint32_t * duty_cycles[] = {
+        &TCC0_REGS->TCC_CC[2],
+        &TCC0_REGS->TCC_CC[3],
+        &TCC0_REGS->TCC_CC[1],
+        &TCC0_REGS->TCC_CC[0]
+};
 uint32_t pwm_dc_from_perthou(int sbus_val) {
 
 }
 
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
     //todo deadbanding
-    TCC0_REGS->TCC_CC[0] = 1000U;
-    TCC0_REGS->TCC_CC[1] = 1000U;
-    TCC0_REGS->TCC_CC[2] = 1000U;
-    TCC0_REGS->TCC_CC[3] = 1000U;
+    *duty_cycles[channel] = sbus_val;
 }
 
 void motor_enable(enum motor_channel channel, bool enable) {

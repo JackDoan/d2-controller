@@ -34,7 +34,7 @@ void TCC0_PWMInitialize(void)
     TCC0_REGS->TCC_WAVE = TCC_WAVE_WAVEGEN_DSTOP;
 
     /* Configure duty cycle values */
-    TCC0_REGS->TCC_CC[0] = 1000U;
+    TCC0_REGS->TCC_CC[0] = 1000U; //todo default these to 0
     TCC0_REGS->TCC_CC[1] = 1000U;
     TCC0_REGS->TCC_CC[2] = 1000U;
     TCC0_REGS->TCC_CC[3] = 1000U;
