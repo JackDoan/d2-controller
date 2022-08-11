@@ -15,35 +15,17 @@
  * along with iNav. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include <stdint.h>
-
-#include "platform.h"
-
 #include "rx/frsky_crc.h"
 
-void frskyCheckSumStep(uint16_t *checksum, uint8_t byte) {
-    *checksum += byte;
-}
-
-void frskyCheckSumFini(uint16_t *checksum) {
-    while (*checksum > 0xFF) {
-        *checksum = (*checksum & 0xFF) + (*checksum >> 8);
-    }
-    *checksum = 0xFF - *checksum;
-}
-
-uint8_t frskyCheckSum(uint8_t *data, uint8_t length)
-{
+uint8_t frskyCheckSum(uint8_t *data, uint8_t length) {
     uint16_t checksum = 0;
     for (unsigned i = 0; i < length; i++) {
-        frskyCheckSumStep(&checksum, *data++);
+        checksum += *data++;
     }
-    frskyCheckSumFini(&checksum);
+    while (checksum > 0xFF) {
+        checksum = (checksum & 0xFF) + (checksum >> 8);
+    }
+    checksum = 0xFF - checksum;
     return checksum;
-}
-
-bool frskyCheckSumIsGood(uint8_t *data, uint8_t length)
-{
-    return !frskyCheckSum(data, length);
 }

@@ -180,7 +180,6 @@ main_sources(COMMON_SRC
 
 #        fc/cli.c
 #        fc/cli.h
-#        fc/config.c
 #        fc/config.h
 #        fc/controlrate_profile.c
 #        fc/controlrate_profile.h
@@ -315,12 +314,8 @@ main_sources(COMMON_SRC
 #        rx/msp_override.h
         rx/frsky_crc.c
         rx/frsky_crc.h
-#        rx/rx.c
-#        rx/rx.h
 #        rx/sbus.c
 #        rx/sbus.h
-        rx/sbus_channels.c
-        rx/sbus_channels.h
 #        rx/spektrum.c
 #        rx/spektrum.h
 #        rx/srxl2.c

@@ -15,10 +15,6 @@
  * along with iNav. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include <stdint.h>
 
 uint8_t frskyCheckSum(uint8_t *data, uint8_t length);
-bool frskyCheckSumIsGood(uint8_t *data, uint8_t length);
-void frskyCheckSumStep(uint16_t *checksum, uint8_t byte);   // Add byte to checksum
-void frskyCheckSumFini(uint16_t *checksum);                 // Finalize checksum

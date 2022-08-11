@@ -1,39 +1,63 @@
 #include <stdio.h>
 #include "fport.h"
 #include "sercom_usart.h"
-#include "rx/sbus_channels.h"
 #include "rx/frsky_crc.h"
+
+#define FPORT_START_OF_FRAME 0x7e
+#define FPORT_END_OF_FRAME 0x7e
 
 static uint8_t fport_dma_rx[1] = {0};
 static uint8_t fport_buf[30] = {0};
 static uint8_t fport_idx = 0;
-static char fport_print_buf[64] = {0};
 
 void fport_trigger(size_t len) {
     fport_gets(fport_dma_rx, len);
+}
+
+uint8_t fport_dma_get_byte(void) {
+    return fport_dma_rx[0];
 }
 
 enum fport_state {
     FPORT_SEEKING,
     FPORT_FOUND_1,
     FPORT_FOUND,
+    FPORT_STUFF_BYTE
 };
 
+static int crc_fail = 0;
+static int eof_fail = 0;
+
 void fport_proc_packet(uint8_t* pkt) {
-    if(pkt[27] != 0x7e) {
+    static char fport_print_buf[64] = {0};
+    struct fport_frame *frame = (struct fport_frame *)pkt;
+    //todo log dropped packets
+    if(frame->eof != FPORT_END_OF_FRAME) {
+        eof_fail++;
         return; //todo log somehow
     }
 
-    volatile uint8_t crc = frskyCheckSum(pkt, 28-2);
-    volatile bool crc_good = crc == pkt[26];
-    if(!crc_good)
-        return;
+    uint8_t crc = frskyCheckSum(pkt, 28-2);
+    if(crc != frame->crc) {
+        crc_fail++;
+        return; //todo log!
+    }
 
-    struct sbusChannels_s *frame = (struct sbusChannels_s *) &(pkt[2]);
-    //todo byte stuffing
-    //todo check CRC!!!
+    //todo byte stuffing?
     //todo packet timeouts
     //todo failsafe! and sanity checks
+
+    if (frame->flags & SBUS_FLAG_CHANNEL_17) {
+
+    }
+
+    if (frame->flags & SBUS_FLAG_CHANNEL_18) {
+
+    }
+
+    if (frame->flags & SBUS_FLAG_SIGNAL_LOSS) {
+
+    }
 
     if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
         sprintf(fport_print_buf, "FAILSAFE %02x\r\n", frame->flags);
@@ -54,10 +78,12 @@ void fport_proc_packet(uint8_t* pkt) {
 
 static enum fport_state state = FPORT_SEEKING;
 void proc_fport_rx(void) {
-    uint8_t x = fport_dma_rx[0];
+    //todo log dropped bytes?
+    //todo byte-stuffing?
+    uint8_t x = fport_dma_get_byte();
     switch(state) {
         case FPORT_SEEKING:
-            if(x == 0x7e) {
+            if(x == FPORT_START_OF_FRAME) {
                 state = FPORT_FOUND_1;
             }
             else {
@@ -76,7 +102,16 @@ void proc_fport_rx(void) {
             }
             fport_trigger(1);
             break;
+        case FPORT_STUFF_BYTE:
+            x ^= 0x20;
+            goto proc_byte;
         case FPORT_FOUND:
+            if(x == 0x7d) { //byte stuffing
+                state = FPORT_STUFF_BYTE;
+                fport_trigger(1);
+                break;
+            }
+        proc_byte:
             fport_buf[fport_idx++] = x;
             fport_trigger(1);
             if(fport_idx >= 28) {

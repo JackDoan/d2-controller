@@ -35,9 +35,8 @@ void DMAC_Initialize(void) {
 
     /* Update the Priority Control register */
     DMAC_REGS->DMAC_PRICTRL = DMAC_PRICTRL_LVLPRI0(1UL) | DMAC_PRICTRL_RRLVLEN0_Msk | DMAC_PRICTRL_LVLPRI1(1UL) | DMAC_PRICTRL_RRLVLEN1_Msk | DMAC_PRICTRL_LVLPRI2(1UL) | DMAC_PRICTRL_RRLVLEN2_Msk | DMAC_PRICTRL_LVLPRI3(1UL) | DMAC_PRICTRL_RRLVLEN3_Msk;
-
+    DMAC_REGS->DMAC_DBGCTRL |= DMAC_DBGCTRL_DBGRUN(1);
     /***************** Configure DMA channel 0 ********************/
-
     DMAC_REGS->DMAC_CHID = 0U;
     DMAC_REGS->DMAC_CHCTRLB = DMAC_CHCTRLB_TRIGACT(2UL) |
             DMAC_CHCTRLB_TRIGSRC(5UL) |
@@ -47,7 +46,6 @@ void DMAC_Initialize(void) {
 
     dmacChannelObj[0].inUse = 1U;
     DMAC_REGS->DMAC_CHINTENSET = (uint8_t)(DMAC_CHINTENSET_TERR_Msk | DMAC_CHINTENSET_TCMPL_Msk);
-
     /***************** Configure DMA channel 1 ********************/
 
     DMAC_REGS->DMAC_CHID = 1U;

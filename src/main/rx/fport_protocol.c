@@ -38,9 +38,7 @@
 #endif
 
 #include "rx/frsky_crc.h"
-#include "rx/rx.h"
 #include "rx/sbus_channels.h"
-#include "rx/fport_protocol.h"
 
 
 #define FPORT_TIME_NEEDED_PER_FRAME_US 3000
@@ -49,7 +47,6 @@
 #define FPORT_MAX_TELEMETRY_AGE_MS 500
 
 #define FPORT_TELEMETRY_MAX_CONSECUTIVE_TELEMETRY_FRAMES 2
-
 
 #define FPORT_FRAME_MARKER 0x7E
 

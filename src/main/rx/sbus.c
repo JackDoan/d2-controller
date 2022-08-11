@@ -27,15 +27,8 @@
 
 #include "common/utils.h"
 
-#include "drivers/time.h"
-
-#include "io/serial.h"
-
-#ifdef USE_TELEMETRY
 #include "telemetry/telemetry.h"
-#endif
 
-#include "rx/rx.h"
 #include "rx/sbus.h"
 #include "rx/sbus_channels.h"
 

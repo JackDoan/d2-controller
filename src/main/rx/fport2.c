@@ -25,8 +25,6 @@
 
 #include "platform.h"
 
-#ifdef USE_SERIALRX_FPORT2
-
 #include "build/debug.h"
 
 #include "common/log.h"
@@ -662,5 +660,3 @@ bool fport2RxInit(const rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig
 
     return fportPort != NULL;
 }
-
-#endif
