@@ -47,8 +47,6 @@ main_sources(COMMON_SRC
         common/circular_queue.h
         common/fport.c
         common/fport.h
-        common/rx/sbus_channels.c
-        common/rx/sbus_channels.h
 
 #        config/config_eeprom.c
 #        config/config_eeprom.h
@@ -315,14 +313,14 @@ main_sources(COMMON_SRC
 #        rx/msp.h
 #        rx/msp_override.c
 #        rx/msp_override.h
-#        rx/frsky_crc.c
-#        rx/frsky_crc.h
+        rx/frsky_crc.c
+        rx/frsky_crc.h
 #        rx/rx.c
 #        rx/rx.h
 #        rx/sbus.c
 #        rx/sbus.h
-#        rx/sbus_channels.c
-#        rx/sbus_channels.h
+        rx/sbus_channels.c
+        rx/sbus_channels.h
 #        rx/spektrum.c
 #        rx/spektrum.h
 #        rx/srxl2.c

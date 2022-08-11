@@ -19,21 +19,17 @@
 #include <stdint.h>
 
 #include "platform.h"
-FILE_COMPILE_FOR_SPEED
 
 #include "rx/frsky_crc.h"
 
-void frskyCheckSumStep(uint16_t *checksum, uint8_t byte)
-{
+void frskyCheckSumStep(uint16_t *checksum, uint8_t byte) {
     *checksum += byte;
 }
 
-void frskyCheckSumFini(uint16_t *checksum)
-{
+void frskyCheckSumFini(uint16_t *checksum) {
     while (*checksum > 0xFF) {
         *checksum = (*checksum & 0xFF) + (*checksum >> 8);
     }
-
     *checksum = 0xFF - *checksum;
 }
 

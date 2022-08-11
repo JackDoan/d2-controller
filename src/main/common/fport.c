@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "fport.h"
 #include "sercom_usart.h"
-#include "common/rx/sbus_channels.h"
+#include "rx/sbus_channels.h"
+#include "rx/frsky_crc.h"
 
 static uint8_t fport_dma_rx[1] = {0};
 static uint8_t fport_buf[30] = {0};
@@ -22,6 +23,12 @@ void fport_proc_packet(uint8_t* pkt) {
     if(pkt[27] != 0x7e) {
         return; //todo log somehow
     }
+
+    volatile uint8_t crc = frskyCheckSum(pkt, 28-2);
+    volatile bool crc_good = crc == pkt[26];
+    if(!crc_good)
+        return;
+
     struct sbusChannels_s *frame = (struct sbusChannels_s *) &(pkt[2]);
     //todo byte stuffing
     //todo check CRC!!!

@@ -53,7 +53,7 @@
 #include "rx/crsf.h"
 #include "rx/ibus.h"
 #include "rx/jetiexbus.h"
-#include "rx/fport.h"
+#include "rx/fport_protocol.h"
 #include "rx/fport2.h"
 #include "rx/msp.h"
 #include "rx/msp_override.h"

@@ -21,9 +21,7 @@
 #include <string.h>
 
 #include "platform.h"
-FILE_COMPILE_FOR_SPEED
 
-#ifdef USE_SERIAL_RX
 
 #include "build/debug.h"
 
@@ -207,4 +205,3 @@ bool sbusInitFast(const rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig
 {
     return sbusInitEx(rxConfig, rxRuntimeConfig, SBUS_BAUDRATE_FAST);
 }
-#endif
