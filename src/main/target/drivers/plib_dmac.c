@@ -1,7 +1,7 @@
 #include "interrupts.h"
 #include "plib_dmac.h"
 
-#define DMAC_CHANNELS_NUMBER        2U
+#define DMAC_CHANNELS_NUMBER        4U
 
 
 typedef struct {
@@ -58,6 +58,18 @@ void DMAC_Initialize(void) {
     descriptor_section[1].DMAC_BTCTRL = (uint16_t)(DMAC_BTCTRL_BLOCKACT_INT | DMAC_BTCTRL_BEATSIZE_BYTE | DMAC_BTCTRL_VALID_Msk | DMAC_BTCTRL_DSTINC_Msk );
 
     dmacChannelObj[1].inUse = 1U;
+    DMAC_REGS->DMAC_CHINTENSET = (uint8_t)(DMAC_CHINTENSET_TERR_Msk | DMAC_CHINTENSET_TCMPL_Msk);
+
+    /***************** Configure DMA channel 3 ********************/
+
+    DMAC_REGS->DMAC_CHID = 3U;
+    DMAC_REGS->DMAC_CHCTRLB = DMAC_CHCTRLB_TRIGACT(2UL) |
+                              DMAC_CHCTRLB_TRIGSRC(2UL) |
+                              DMAC_CHCTRLB_LVL(0UL) ;
+
+    descriptor_section[3].DMAC_BTCTRL = (uint16_t)(DMAC_BTCTRL_BLOCKACT_INT | DMAC_BTCTRL_BEATSIZE_BYTE | DMAC_BTCTRL_VALID_Msk | DMAC_BTCTRL_DSTINC_Msk );
+
+    dmacChannelObj[3].inUse = 1U;
     DMAC_REGS->DMAC_CHINTENSET = (uint8_t)(DMAC_CHINTENSET_TERR_Msk | DMAC_CHINTENSET_TCMPL_Msk);
 
     /**end channel config***/

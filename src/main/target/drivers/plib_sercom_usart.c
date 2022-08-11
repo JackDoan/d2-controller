@@ -320,6 +320,10 @@ void serial_gets(void *buffer, size_t len) {
     DMAC_ChannelTransfer(DMAC_CHANNEL_1, (const void *)&FTDI->USART_INT.SERCOM_DATA, buffer, len);
 }
 
+void fport_gets(void *buffer, size_t len) {
+    DMAC_ChannelTransfer(DMAC_CHANNEL_3, (const void *)&RX->USART_INT.SERCOM_DATA, buffer, len);
+}
+
 void SERCOM_USART_TX_Wait(sercom_registers_t* sercom) {
     SERCOM_USART_OBJECT *obj = get_object(sercom);
     while(obj->txBusyStatus == true) {}

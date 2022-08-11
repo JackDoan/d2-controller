@@ -6,6 +6,7 @@
 #include "sercom_spi_master.h"
 #include "plib_nvic.h"
 #include "plib_dmac.h"
+#include "common/fport.h"
 
 char dingdong[32] = {0};
 uint8_t spi_rx[2] = {0};
@@ -65,9 +66,14 @@ void cmd_prompt(char cmd) {
     }
 }
 
-static bool readStatus = false;
-static void ReceiveCompleteCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
-    readStatus = true;
+static bool ftdiRead = false;
+static void ftdiRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+    ftdiRead = true;
+}
+
+static bool rxRead = false;
+static void fportRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+    rxRead = true;
 }
 
 int main(void) {
@@ -75,13 +81,15 @@ int main(void) {
     PORT_Initialize();
     CLOCK_Initialize();
     DMAC_Initialize();
-    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, ReceiveCompleteCallback,0);
+    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, ftdiRxCallback, 0);
+    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, fportRxCallback, 0);
     NVIC_Initialize();
 
     TCC0_PWMInitialize();
     TCC0_PWM_Enable(true); //todo remove?
 
     SERCOM_USART_Initialize(FTDI);
+    SERCOM_USART_Initialize(RX);
     SERCOM_SPI_Initialize(SPI);
 
     SERCOM_SPI_CallbackRegister(spi_callback, (uintptr_t)FTDI);
@@ -91,12 +99,17 @@ int main(void) {
 
     serial_puts(welcome_str);
     serial_gets(x, 1);
+    fport_trigger(1);
     for(;;) {
-        if(readStatus) {
-            readStatus = false;
+        if(ftdiRead) {
+            ftdiRead = false;
             serial_puts(x);
             cmd_prompt(x[0]);
             serial_gets(x, 1);
+        }
+        if(rxRead) {
+            rxRead = false;
+            proc_fport_rx();
         }
     }
 }

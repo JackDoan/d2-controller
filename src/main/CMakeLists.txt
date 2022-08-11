@@ -45,6 +45,10 @@ main_sources(COMMON_SRC
 #        common/uvarint.h
         common/circular_queue.c
         common/circular_queue.h
+        common/fport.c
+        common/fport.h
+        common/rx/sbus_channels.c
+        common/rx/sbus_channels.h
 
 #        config/config_eeprom.c
 #        config/config_eeprom.h

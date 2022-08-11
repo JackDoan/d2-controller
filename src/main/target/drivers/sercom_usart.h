@@ -72,6 +72,7 @@ bool SERCOM_USART_Write(sercom_registers_t* sercom, const void *buffer, const si
 bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const size_t size);
 void serial_puts(void *buffer);
 void serial_gets(void *buffer, size_t len);
+void fport_gets(void *buffer, size_t len);
 void SERCOM_USART_TX_Wait(sercom_registers_t* sercom);
 void SERCOM_USART_RX_Wait(sercom_registers_t* sercom);
 bool SERCOM_USART_TransmitComplete(sercom_registers_t* sercom);
