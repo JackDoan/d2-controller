@@ -25,7 +25,7 @@ enum fport_state {
     FPORT_STUFF_BYTE
 };
 
-static int crc_fail = 0;
+static int crc_fail = 0; //todo make these measureable?
 static int eof_fail = 0;
 
 void fport_proc_packet(uint8_t* pkt) {
@@ -34,18 +34,26 @@ void fport_proc_packet(uint8_t* pkt) {
     //todo log dropped packets
     if(frame->eof != FPORT_END_OF_FRAME) {
         eof_fail++;
-        return; //todo log somehow
+        return;
     }
 
     uint8_t crc = frskyCheckSum(pkt, 28-2);
     if(crc != frame->crc) {
         crc_fail++;
-        return; //todo log!
+        return;
+    } else {
+        packet_timer_watchdog_feed();
     }
 
-    //todo byte stuffing?
+    if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
+        failsafe_activate();
+        sprintf(fport_print_buf, "FAILSAFE %02x\r\n", frame->flags);
+        serial_puts(fport_print_buf);
+        return;
+    }
+
     //todo packet timeouts
-    //todo failsafe! and sanity checks
+    //todo sanity checks, filters?
 
     if (frame->flags & SBUS_FLAG_CHANNEL_17) {
 
@@ -59,15 +67,12 @@ void fport_proc_packet(uint8_t* pkt) {
 
     }
 
-    if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
-        sprintf(fport_print_buf, "FAILSAFE %02x\r\n", frame->flags);
-        motor_enable(MOTOR3, false);
-        //todo nix PWM too
-        serial_puts(fport_print_buf);
-        return;
-    }
-    motor_enable(MOTOR3, true);
+    motors_set_enable(true); //todo disable per-motor?
     motor_set_speed(MOTOR3, frame->chan0);
+    motor_set_speed(MOTOR1, frame->chan0);
+    motor_set_speed(MOTOR2, frame->chan1);
+    //todo motor_set_speed(MOTOR3, frame->chan2);
+    motor_set_speed(MOTOR4, frame->chan3);
 
     for(int i = 0; i < fport_idx; i++) {
         sprintf(&(fport_print_buf[2*i]), "%02x", pkt[i]);
@@ -79,7 +84,6 @@ void fport_proc_packet(uint8_t* pkt) {
 static enum fport_state state = FPORT_SEEKING;
 void proc_fport_rx(void) {
     //todo log dropped bytes?
-    //todo byte-stuffing?
     uint8_t x = fport_dma_get_byte();
     switch(state) {
         case FPORT_SEEKING:
@@ -105,7 +109,7 @@ void proc_fport_rx(void) {
         case FPORT_STUFF_BYTE:
             x ^= 0x20;
             goto proc_byte;
-        case FPORT_FOUND:
+        case FPORT_FOUND: //todo is this all I need for byte-stuffing?
             if(x == 0x7d) { //byte stuffing
                 state = FPORT_STUFF_BYTE;
                 fport_trigger(1);
@@ -124,5 +128,4 @@ void proc_fport_rx(void) {
             fport_trigger(1);
             break;
     }
-
 }

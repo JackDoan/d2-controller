@@ -2,7 +2,6 @@
 #include "plib_tcc0.h"
 
 
-/* Object to hold callback function and context */
 static TCC_CALLBACK_OBJECT TCC0_CallbackObj;
 
 static inline void TCC0_Sync(uint32_t mask) {
@@ -34,13 +33,16 @@ void TCC0_PWMInitialize(void)
     TCC0_REGS->TCC_WAVE = TCC_WAVE_WAVEGEN_DSTOP;
 
     /* Configure duty cycle values */
-    TCC0_REGS->TCC_CC[0] = 1000U; //todo default these to 0
-    TCC0_REGS->TCC_CC[1] = 1000U;
-    TCC0_REGS->TCC_CC[2] = 1000U;
-    TCC0_REGS->TCC_CC[3] = 1000U;
+    TCC0_REGS->TCC_CC[0] = 0;
+    TCC0_REGS->TCC_CC[1] = 0;
+    TCC0_REGS->TCC_CC[2] = 0;
+    TCC0_REGS->TCC_CC[3] = 0;
     TCC0_REGS->TCC_PER = 1805/2U;  //hmm making this the same as sbus seems... handy
 
     TCC0_REGS->TCC_INTENSET = TCC_INTENSET_OVF_Msk;
+    TCC0_REGS->TCC_DBGCTRL |= TCC_DBGCTRL_DBGRUN_Msk;
+
+    TCC0_REGS->TCC_CTRLA |= TCC_CTRLA_ENABLE_Msk;
 
     TCC0_Sync(0xffffffff);
 }

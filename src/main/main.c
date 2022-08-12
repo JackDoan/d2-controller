@@ -7,6 +7,7 @@
 #include "plib_nvic.h"
 #include "plib_dmac.h"
 #include "common/fport.h"
+#include "timer.h"
 
 char dingdong[32] = {0};
 uint8_t spi_rx[2] = {0};
@@ -84,9 +85,8 @@ int main(void) {
     DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, ftdiRxCallback, 0);
     DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, fportRxCallback, 0);
     NVIC_Initialize();
-
+    Timer_Init(TC2_REGS);
     TCC0_PWMInitialize();
-    TCC0_PWM_Enable(true); //todo remove?
 
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);
@@ -96,6 +96,7 @@ int main(void) {
     //todo read reset-cause?
     //todo set PAC after configuring peripherals
     //todo watchdog
+    //todo periodic spi polling
 
     serial_puts(welcome_str);
     serial_gets(x, 1);

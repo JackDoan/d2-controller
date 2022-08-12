@@ -8,6 +8,7 @@ void NVIC_Initialize( void ) {
 
     /* Enable the interrupt sources and configure the priorities as configured
      * from within the "Interrupt Manager" of MHC. */
+    //todo configure priorities
     NVIC_SetPriority(SERCOM3_IRQn, 3); //SPI
     NVIC_EnableIRQ(SERCOM3_IRQn);
     NVIC_SetPriority(SERCOM1_IRQn, 3); //FTDI
@@ -16,6 +17,8 @@ void NVIC_Initialize( void ) {
     NVIC_EnableIRQ(SERCOM0_IRQn);
     NVIC_SetPriority(DMAC_IRQn, 3);
     NVIC_EnableIRQ(DMAC_IRQn);
+    NVIC_SetPriority(TC2_IRQn, 3);
+    NVIC_EnableIRQ(TC2_IRQn);
 }
 
 void NVIC_INT_Enable( void )

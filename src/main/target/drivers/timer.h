@@ -1,8 +1,10 @@
-//
-// Created by jack on 8/11/22.
-//
+#ifndef D2_TIMER_H
+#define D2_TIMER_H
 
-#ifndef INAV_TIMER_H
-#define INAV_TIMER_H
+#include "device.h"
+#include "component/tc.h"
 
-#endif //INAV_TIMER_H
+void Timer_Init(tc_registers_t* timer_regs);
+
+
+#endif //D2_TIMER_H
