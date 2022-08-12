@@ -53,8 +53,6 @@ def main():
     import sys
 
     # Default openocd telnet port
-    # TODO: Parse arguments and check if we
-    # should use a non-default port
     port = 4444
     openocd = os.environ.get('OPENOCD_CMD') or 'openocd'
 
