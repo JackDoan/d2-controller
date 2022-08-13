@@ -9,6 +9,7 @@
 #include "common/fport.h"
 #include "timer.h"
 #include "plib_adc0.h"
+#include "plib_systick.h"
 
 char dingdong[32] = {0};
 uint8_t spi_rx[2] = {0};
@@ -92,6 +93,7 @@ int main(void) {
     NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3); //needed so when we clock up we don't outrun flash
     PORT_Initialize();
     CLOCK_Initialize();
+    SYSTICK_TimerStart();
     DMAC_Initialize();
     DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, uartRxCallback, (uintptr_t) &ftdiRead);
     DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, uartRxCallback, (uintptr_t) &rxRead);

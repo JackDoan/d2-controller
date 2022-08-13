@@ -389,6 +389,7 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/sercom_spi_master.c
     target/drivers/plib_nvic.c
     target/drivers/plib_dmac.c
+    target/drivers/plib_systick.c
     target/drivers/timer.c
     target/device.c
 #
