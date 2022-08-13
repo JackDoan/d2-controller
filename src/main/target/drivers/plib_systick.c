@@ -7,7 +7,7 @@ static SYSTICK_OBJECT systick;
 void SYSTICK_TimerInitialize(void) {
     SysTick->CTRL = 0U;
     SysTick->VAL = 0U;
-    SysTick->LOAD = 0xBB80U - 1U;
+    SysTick->LOAD = (SYSTICK_FREQ/1000) - 1U;  //defaults to millisecond period
     SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_CLKSOURCE_Msk;
 //    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
 
@@ -131,4 +131,37 @@ void SysTick_Handler(void) {
 //       systick.callback(systick.context);
 //   }
    (void)sysCtrl;
+}
+
+
+static const char rstc_syst[] = "System Reset";
+static const char rstc_wdt[] = "Watchdog Reset";
+static const char rstc_ext[] = "External Reset";
+static const char rstc_bovdd[] = "Brownout VDD Reset";
+static const char rstc_bovcore[] = "Brownout VCore Reset";
+static const char rstc_por[] = "Power On Reset";
+static const char rstc_unk[] = "Unknown";
+
+static const char* reset_reasons[] = {
+        rstc_por,
+        rstc_bovcore,
+        rstc_bovdd,
+        rstc_unk,
+        rstc_ext,
+        rstc_wdt,
+        rstc_syst,
+        rstc_unk
+};
+
+const char* RSTC_ResetCauseGetStr(void) {
+    union RSTC_Cause x = RSTC_ResetCauseGet();
+    for(int i = 0; i < 8; i++) {
+        if(x.byte & (1 << i))
+            return reset_reasons[i];
+    }
+    return rstc_unk;
+}
+
+union RSTC_Cause RSTC_ResetCauseGet(void) {
+    return (union RSTC_Cause)RSTC_REGS->RSTC_RCAUSE;
 }

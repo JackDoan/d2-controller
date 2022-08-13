@@ -1,7 +1,9 @@
 #include <string.h>
+#include <stdio.h>
 #include "interrupts.h"
 #include "sercom_usart.h"
 #include "plib_dmac.h"
+#include "plib_systick.h"
 
 /* SERCOM USART baud value for 115200 Hz baud rate */
 #define SERCOM_USART_INT_BAUD_VALUE            (63019UL)
@@ -61,7 +63,14 @@ void SERCOM_USART_Initialize(sercom_registers_t* sercom)
      * Configures Sampling rate
      * Configures IBON
      */
-    sercom->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK | SERCOM_USART_INT_CTRLA_RXPO(0x1UL) | SERCOM_USART_INT_CTRLA_TXPO(0x0UL) | SERCOM_USART_INT_CTRLA_DORD_Msk | SERCOM_USART_INT_CTRLA_IBON_Msk | SERCOM_USART_INT_CTRLA_FORM(0x0UL) | SERCOM_USART_INT_CTRLA_SAMPR(0UL) ;
+    sercom->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |
+            SERCOM_USART_INT_CTRLA_RXPO(0x1UL) |  // pad 1 is RX
+//            SERCOM_USART_INT_CTRLA_RXPO(0x0UL) |
+            SERCOM_USART_INT_CTRLA_TXPO(0x0UL) |  // pad 0 is TX
+            SERCOM_USART_INT_CTRLA_DORD_Msk |
+            SERCOM_USART_INT_CTRLA_IBON_Msk |
+            SERCOM_USART_INT_CTRLA_FORM(0x0UL) |
+            SERCOM_USART_INT_CTRLA_SAMPR(0UL);
 
     /* Configure Baud Rate */
     sercom->USART_INT.SERCOM_BAUD = (uint16_t)SERCOM_USART_INT_BAUD_BAUD(SERCOM_USART_INT_BAUD_VALUE);
@@ -73,7 +82,10 @@ void SERCOM_USART_Initialize(sercom_registers_t* sercom)
      * Configures Parity
      * Configures Stop bits
      */
-    sercom->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT | SERCOM_USART_INT_CTRLB_SBMODE_1_BIT | SERCOM_USART_INT_CTRLB_RXEN_Msk | SERCOM_USART_INT_CTRLB_TXEN_Msk;
+    sercom->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
+            SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
+            SERCOM_USART_INT_CTRLB_RXEN_Msk |
+            SERCOM_USART_INT_CTRLB_TXEN_Msk;
     SERCOM_Sync(sercom);
 
     /* Enable the UART after the configurations */
@@ -312,8 +324,12 @@ bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const
 }
 
 void serial_puts(void *buffer) {
-    //SERCOM_USART_Write_Nonblock(FTDI, buffer, strlen(buffer));
-    DMAC_ChannelTransfer(DMAC_CHANNEL_0, buffer, (const void *)&FTDI->USART_INT.SERCOM_DATA, strlen(buffer));
+    //todo make this vararg?
+    static char print_buf[128] = {0};
+    if(!DMAC_ChannelIsBusy(DMAC_CHANNEL_0)) {
+        size_t len = snprintf(print_buf, sizeof(print_buf), "(%05ld) %s", SYSTICK_GetTickCounter(), (char*)buffer);
+        DMAC_ChannelTransfer(DMAC_CHANNEL_0, print_buf, (const void *)&FTDI->USART_INT.SERCOM_DATA, len);
+    }
 }
 
 void serial_gets(void *buffer, size_t len) {

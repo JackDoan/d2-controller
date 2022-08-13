@@ -3,6 +3,8 @@
 #include "plib_port.h"
 #include "sercom_usart.h"
 
+#define FPORT_TX_PIN PORT_PIN_PA08
+
 const int sbus_max = 2047;
 const int sbus_mid = 992;
 const int sbus_min = 0;
@@ -45,7 +47,7 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     *duty_cycles[channel] = abs_val;
 }
 
-#define PACKET_TIMEOUT_MAX_COUNT 10
+#define PACKET_TIMEOUT_MAX_COUNT 500
 volatile uint32_t packet_timeout_counter = 0;
 void packet_timer_watchdog_feed(void) {
     packet_timeout_counter = 0;
@@ -58,6 +60,18 @@ void packet_timer_watchdog_tick(void) {
     }
 }
 
+void fport_enable_tx(bool enable) {
+    if(enable) {
+        SERCOM_USART_ReceiverDisable(RX);
+        PORT_PinPeripheralFunctionConfig(FPORT_TX_PIN, PERIPHERAL_FUNCTION_C);
+        SERCOM_USART_TransmitterEnable(RX);
+    }
+    else {
+        SERCOM_USART_TransmitterDisable(RX);
+        PORT_PinGPIOConfig(FPORT_TX_PIN);
+        SERCOM_USART_ReceiverEnable(RX);
+    }
+}
 
 void end(void) {
 }

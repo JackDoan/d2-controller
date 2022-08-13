@@ -9,7 +9,7 @@
     extern "C" {
 #endif
 
-#define SYSTICK_FREQ   48000000U
+#define SYSTICK_FREQ   48000000U //todo define in terms of core
 
 #define SYSTICK_INTERRUPT_PERIOD_IN_US  (1000U)
 
@@ -42,6 +42,21 @@ uint32_t SYSTICK_GetTickCounter(void);
 void SYSTICK_StartTimeOut (SYSTICK_TIMEOUT* timeout, uint32_t delay_ms);
 void SYSTICK_ResetTimeOut (SYSTICK_TIMEOUT* timeout);
 bool SYSTICK_IsTimeoutReached (SYSTICK_TIMEOUT* timeout);
+
+union RSTC_Cause {
+    struct {
+        bool system_reset: 1;
+        bool wdt: 1;
+        bool external: 1;
+        bool brown_out_vdd: 1;
+        bool brown_out_core: 1;
+        bool power_on: 1;
+    };
+    uint8_t byte;
+};
+
+union RSTC_Cause RSTC_ResetCauseGet(void);
+const char* RSTC_ResetCauseGetStr(void);
 #ifdef __cplusplus // Provide C++ Compatibility
  }
 #endif

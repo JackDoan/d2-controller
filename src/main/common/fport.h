@@ -28,7 +28,7 @@ struct fport_frame {
     uint8_t flags;
     uint8_t rssi;
     uint8_t crc;
-    uint8_t eof;
+//    uint8_t eof;
 } __attribute__((__packed__));
 
 #define SBUS_FLAG_CHANNEL_17        (1 << 0)

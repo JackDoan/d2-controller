@@ -28,7 +28,7 @@ void PORT_Initialize(void) {
 
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA07, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA08, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0 //todo switch these?
+//    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA08, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0 //todo switch these?
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA09, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1 --actually hooked up
 
     PORT_PinPeripheralFunctionConfig(PORT_PIN_PA16, PERIPHERAL_FUNCTION_C); //FTDI Sercom1 Pad 0

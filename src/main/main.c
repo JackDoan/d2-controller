@@ -72,6 +72,9 @@ void cmd_prompt(char cmd) {
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "SysTick: %lu\r\n", SYSTICK_GetTickCounter());
             serial_puts(cmd_resp_buf);
             break;
+        case 'r':
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "Reset Cause: %s\r\n", RSTC_ResetCauseGetStr());
+            serial_puts(cmd_resp_buf);
         default:
             break;
     }
@@ -134,7 +137,7 @@ int main(void) {
             rxRead = false;
             proc_fport_rx();
         }
-        L9958_Tick();
+        //L9958_Tick();
     }
 }
 

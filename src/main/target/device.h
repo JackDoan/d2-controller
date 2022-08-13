@@ -42,5 +42,6 @@ void motor_set_speed(enum motor_channel channel, int sbus_val);
 void failsafe_activate(void);
 void packet_timer_watchdog_tick(void);
 void packet_timer_watchdog_feed(void);
+void fport_enable_tx(bool enable);
 
 #endif //INAV_DEVICE_H
