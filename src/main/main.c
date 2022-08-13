@@ -65,7 +65,7 @@ void cmd_prompt(char cmd) {
             fport_enable_printing(false);
             break;
         case 'a':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\n", (int) ADC0_Convert_mV());
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\n", ADC0_Convert_mV());
             serial_puts(cmd_resp_buf);
             break;
         case 't':
