@@ -56,7 +56,22 @@ void print_hex(void* buf, uint8_t* pkt, int len) {
 }
 #define T1_FIRST_ID               0x0400 // -> 0004
 #define BATT_ID                   0xF104 // -> 04f1
+
+union __attribute__((packed)) fport_response {
+    struct __attribute__((packed)) {
+        uint8_t len;
+        uint8_t uplink;
+        uint8_t type;
+        uint16_t id;
+        uint32_t data;
+        uint8_t crc;
+    };
+    uint8_t bytes[10];
+};
+
 void fport_proc_telemetry_req(uint8_t* pkt) {
+
+    //note: very timing sensitive. Looks like if you change the order of this, it breaks :(
     static bool send = false;
     static uint8_t i = 0;
 
