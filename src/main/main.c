@@ -13,11 +13,6 @@
 #include "l9958.h"
 
 
-uint8_t spi_rx[2] = {0};
-
-
-uint8_t x[4] = {0};
-
 char cmd_resp_buf[64] = {0};
 
 void cmd_prompt(char cmd) {
@@ -58,10 +53,7 @@ void cmd_prompt(char cmd) {
             PORT_PinToggle(DIR3);
             break;
         case 's':
-//            SERCOM_SPI_WriteRead(CS3, spi_tx, 2, spi_rx, 2);
-//            while(SERCOM_SPI_IsBusy(SPI)) {}
-
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "\r\n1: %04x\r\n2: %04x\r\n3: %04x\r\n4: %04x\r\n",
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "1: %04x\r\n2: %04x\r\n3: %04x\r\n4: %04x\r\n",
                      L9958_Diag_Read(MOTOR1), L9958_Diag_Read(MOTOR2),
                      L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
             serial_puts(cmd_resp_buf);
@@ -73,7 +65,12 @@ void cmd_prompt(char cmd) {
             fport_enable_printing(false);
             break;
         case 'a':
-            ADC0_Convert();
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\n", (int) ADC0_Convert_mV());
+            serial_puts(cmd_resp_buf);
+            break;
+        case 't':
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "SysTick: %lu\r\n", SYSTICK_GetTickCounter());
+            serial_puts(cmd_resp_buf);
             break;
         default:
             break;
@@ -96,8 +93,8 @@ static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
 }
 
 
-
 int main(void) {
+    uint8_t x[2] = {0, 0};
     NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3); //needed so when we clock up we don't outrun flash
     PORT_Initialize();
     CLOCK_Initialize();
@@ -117,20 +114,12 @@ int main(void) {
     SERCOM_USART_Initialize(RX);
     L9958_Init();
 
-
     //todo read reset-cause?
     //todo set PAC after configuring peripherals
     //todo watchdog
-    //todo periodic spi polling
     //todo poll ADC for vbat
     //todo telemetry
     //todo mcu temp sensor
-
-//    /* Make stdin unbuffered */
-//    setbuf(stdin, NULL);
-//
-//    /* Make stdout unbuffered */
-//    setbuf(stdout, NULL);
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
@@ -138,7 +127,6 @@ int main(void) {
     for(;;) {
         if(ftdiRead) {
             ftdiRead = false;
-            serial_puts(x);
             cmd_prompt(x[0]);
             serial_gets(x, 1);
         }

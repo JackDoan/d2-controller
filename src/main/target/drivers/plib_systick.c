@@ -8,8 +8,8 @@ void SYSTICK_TimerInitialize(void) {
     SysTick->CTRL = 0U;
     SysTick->VAL = 0U;
     SysTick->LOAD = 0xBB80U - 1U;
-//    SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_CLKSOURCE_Msk;
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
+    SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_CLKSOURCE_Msk;
+//    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
 
     systick.tickCounter = 0U;
     systick.callback = NULL;
@@ -35,7 +35,7 @@ void SYSTICK_TimerPeriodSet(uint32_t period) {
 }
 
 uint32_t SYSTICK_TimerPeriodGet(void) {
-        return(SysTick->LOAD);
+    return(SysTick->LOAD);
 }
 
 uint32_t SYSTICK_TimerCounterGet(void) {
@@ -102,31 +102,23 @@ void SYSTICK_DelayUs(uint32_t delay_us) {
    }
 }
 
-
-
 uint32_t SYSTICK_GetTickCounter(void) {
 	return systick.tickCounter; 
 }
 
-void SYSTICK_StartTimeOut (SYSTICK_TIMEOUT* timeout, uint32_t delay_ms) {
+void SYSTICK_StartTimeOut(SYSTICK_TIMEOUT* timeout, uint32_t delay_ms) {
 	timeout->start = SYSTICK_GetTickCounter();
 	timeout->count = (delay_ms*1000U)/SYSTICK_INTERRUPT_PERIOD_IN_US; 
 }
 
-void SYSTICK_ResetTimeOut (SYSTICK_TIMEOUT* timeout) {
+void SYSTICK_ResetTimeOut(SYSTICK_TIMEOUT* timeout) {
 	timeout->start = SYSTICK_GetTickCounter(); 
 }
 
-bool SYSTICK_IsTimeoutReached (SYSTICK_TIMEOUT* timeout) {
-    bool valTimeout  = true;
-	if ((SYSTICK_GetTickCounter() - timeout->start) < timeout->count) {
-		valTimeout = false;
-	}
-	
-	return valTimeout;
-	
+bool SYSTICK_IsTimeoutReached(SYSTICK_TIMEOUT* timeout) {
+	return (SYSTICK_GetTickCounter() - timeout->start) < timeout->count;
 }
-void SYSTICK_TimerCallbackSet ( SYSTICK_CALLBACK callback, uintptr_t context ) {
+void SYSTICK_TimerCallbackSet(SYSTICK_CALLBACK callback, uintptr_t context) {
    systick.callback = callback;
    systick.context = context;
 }
@@ -135,8 +127,8 @@ void SysTick_Handler(void) {
    /* Reading control register clears the count flag */
    uint32_t sysCtrl = SysTick->CTRL;
    systick.tickCounter++;
-   if(systick.callback != NULL) {
-       systick.callback(systick.context);
-   }
+//   if(systick.callback != NULL) {
+//       systick.callback(systick.context);
+//   }
    (void)sysCtrl;
 }

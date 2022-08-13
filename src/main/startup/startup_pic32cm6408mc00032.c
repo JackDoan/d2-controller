@@ -86,7 +86,7 @@ const DeviceVectors exception_table = {
         .pvReservedC4                  = (void*) (0UL), /* Reserved */
         .pvReservedC3                  = (void*) (0UL), /* Reserved */
         .pfnPendSV_Handler             = (void*) Dummy_Handler,
-        .pfnSysTick_Handler            = (void*) Dummy_Handler,
+        .pfnSysTick_Handler            = (void*) SysTick_Handler,
 
         /* Configurable interrupts */
         .pfnSYSTEM_Handler             = (void*) Dummy_Handler, /* 0  Main Clock */

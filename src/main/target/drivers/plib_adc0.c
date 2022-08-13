@@ -7,6 +7,7 @@
 #define ADC0_BIASCAL_POS  (3U)
 #define ADC0_BIASCAL_Msk   (0x7UL << ADC0_BIASCAL_POS)
 
+#define ADC_SCALE 6.06f
 
 void ADC0_Initialize(void) {
     /* Reset ADC */
@@ -116,11 +117,11 @@ bool ADC0_ConversionStatusGet(void) {
     return status;
 }
 
-float ADC0_Convert(void) {
+float ADC0_Convert_mV(void) {
     ADC0_ConversionStart();
     while(!ADC0_ConversionStatusGet()) {};
 
     uint16_t adc_count = ADC0_ConversionResultGet();
-    float input_voltage = (float)adc_count * ADC_VREF / 4095U;
+    float input_voltage = (float)adc_count * ADC_SCALE * ADC_VREF / (41) /*was 4096, but I want millivolts */;
     return input_voltage;
 }
