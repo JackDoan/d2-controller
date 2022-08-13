@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 struct fport_frame {
     uint8_t length;
@@ -37,5 +38,6 @@ struct fport_frame {
 
 void proc_fport_rx(void);
 void fport_trigger(size_t len);
+void fport_enable_printing(bool enable);
 
 #endif //INAV_FPORT_H

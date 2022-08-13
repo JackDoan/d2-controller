@@ -381,6 +381,7 @@ main_sources(PIC32CM_MC00_SRC
     ../vendor/PIC32CM6408MC00032/gcc/system_pic32cm6408mc00032.c
     ../vendor/PIC32CM6408MC00032/gcc/system_pic32cm6408mc00032.c
 
+    target/drivers/plib_adc0.c
     target/drivers/plib_port.c
     target/drivers/plib_clock.c
     target/drivers/plib_sercom_usart.c

@@ -18,6 +18,11 @@ uint8_t fport_dma_get_byte(void) {
     return fport_dma_rx[0];
 }
 
+static bool fport_print = false;
+void fport_enable_printing(bool enable) {
+    fport_print = enable;
+}
+
 enum fport_state {
     FPORT_SEEKING,
     FPORT_FOUND_1,
@@ -47,8 +52,10 @@ void fport_proc_packet(uint8_t* pkt) {
 
     if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
         failsafe_activate();
-        sprintf(fport_print_buf, "FAILSAFE %02x\r\n", frame->flags);
-        serial_puts(fport_print_buf);
+        if(fport_print) {
+            sprintf(fport_print_buf, "FAILSAFE %02x\r\n", frame->flags);
+            serial_puts(fport_print_buf);
+        }
         return;
     }
 
@@ -74,11 +81,13 @@ void fport_proc_packet(uint8_t* pkt) {
     //todo motor_set_speed(MOTOR3, frame->chan2);
     motor_set_speed(MOTOR4, frame->chan3);
 
-    for(int i = 0; i < fport_idx; i++) {
-        sprintf(&(fport_print_buf[2*i]), "%02x", pkt[i]);
+    if(fport_print) {
+        for (int i = 0; i < fport_idx; i++) {
+            sprintf(&(fport_print_buf[2 * i]), "%02x", pkt[i]);
+        }
+        sprintf(&(fport_print_buf[2 * fport_idx]), "\r\n");
+        serial_puts(fport_print_buf);
     }
-    sprintf(&(fport_print_buf[2*fport_idx]), "\r\n");
-    serial_puts(fport_print_buf);
 }
 
 static enum fport_state state = FPORT_SEEKING;

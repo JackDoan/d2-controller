@@ -8,6 +8,7 @@
 #include "plib_dmac.h"
 #include "common/fport.h"
 #include "timer.h"
+#include "plib_adc0.h"
 
 char dingdong[32] = {0};
 uint8_t spi_rx[2] = {0};
@@ -16,7 +17,6 @@ void spi_callback(uintptr_t context) {
     sprintf(dingdong, "%02x %02x\r\n", spi_rx[0], spi_rx[1]);
     serial_puts(dingdong);
 }
-char welcome_str[] = "D2 Motherboard\r\n";
 uint8_t x[4] = {0};
 
 static uint8_t spi_tx[4] = {0b00001110, 0b00000000};
@@ -62,31 +62,44 @@ void cmd_prompt(char cmd) {
             SERCOM_SPI_WriteRead(CS3, spi_tx, 2, spi_rx, 2);
             while(SERCOM_SPI_IsBusy(SPI)) {}
             break;
+        case 'p':
+            fport_enable_printing(true);
+            break;
+        case 'P':
+            fport_enable_printing(false);
+            break;
         default:
             break;
     }
 }
 
-static bool ftdiRead = false;
-static void ftdiRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
-    ftdiRead = true;
-}
-
 static bool rxRead = false;
-static void fportRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
-    rxRead = true;
+static bool ftdiRead = false;
+static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+    switch(event) {
+        case DMAC_TRANSFER_EVENT_COMPLETE:
+            *(bool*)contextHandle = true;
+            break;
+        case DMAC_TRANSFER_EVENT_NONE:
+        case DMAC_TRANSFER_EVENT_ERROR:
+        default:
+            break;
+    }
+
 }
 
 int main(void) {
-    NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3);
+    NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3); //needed so when we clock up we don't outrun flash
     PORT_Initialize();
     CLOCK_Initialize();
     DMAC_Initialize();
-    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, ftdiRxCallback, 0);
-    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, fportRxCallback, 0);
+    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, uartRxCallback, (uintptr_t) &ftdiRead);
+    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, uartRxCallback, (uintptr_t) &rxRead);
     NVIC_Initialize();
     Timer_Init(TC2_REGS);
     TCC0_PWMInitialize();
+
+    ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
 
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);
@@ -97,8 +110,11 @@ int main(void) {
     //todo set PAC after configuring peripherals
     //todo watchdog
     //todo periodic spi polling
+    //todo ADC for vbat
+    //todo telemetry
+    //todo mcu temp sensor
 
-    serial_puts(welcome_str);
+    serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
     fport_trigger(1);
     for(;;) {

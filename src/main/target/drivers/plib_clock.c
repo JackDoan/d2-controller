@@ -14,6 +14,7 @@ static void OSCCTRL_Initialize(void) {
 static void OSC32KCTRL_Initialize(void) {
     OSC32KCTRL_REGS->OSC32KCTRL_OSC32K = 0x0UL;
     OSC32KCTRL_REGS->OSC32KCTRL_RTCCTRL = OSC32KCTRL_RTCCTRL_RTCSEL(0UL);
+    OSC32KCTRL_REGS->OSC32KCTRL_OSCULP32K |= OSC32KCTRL_OSCULP32K_WRTLOCK_Msk | OSC32KCTRL_OSCULP32K_EN1K_Msk;
 }
 
 
@@ -24,6 +25,17 @@ static void GCLK0_Initialize(void) {
     while((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL2_Msk) == GCLK_SYNCBUSY_GENCTRL2_Msk) { }
 }
 
+enum gclk_router_channels {
+    GCLK_SERCOM0_CORE = 19,
+    GCLK_SERCOM1_CORE = 20,
+    GCLK_SERCOM2_CORE = 21,
+    GCLK_SERCOM3_CORE = 22,
+    GCLK_TCC0_CORE = 23,
+    GCLK_TC0_TC1 = 25,
+    GCLK_TC2_TC3 = 26,
+    GCLK_ADC0 = 28,
+};
+
 void CLOCK_Initialize (void) {
     /* Function to Initialize the Oscillators */
     OSCCTRL_Initialize();
@@ -33,35 +45,35 @@ void CLOCK_Initialize (void) {
 
     GCLK0_Initialize();
 
-    const int GCLK_SERCOM0_CORE = 19;
-    const int GCLK_SERCOM1_CORE = 20;
-    const int GCLK_SERCOM2_CORE = 21;
-    const int GCLK_SERCOM3_CORE = 22;
-    const int GCLK_TCC0_CORE = 23;
-    const int GCLK_TC0_TC1 = 25;
-    const int GCLK_TC2_TC3 = 26;
-    /* Selection of the Generator and write Lock for SERCOM0_CORE */
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM0_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM1_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM2_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM3_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_TCC0_CORE] = GCLK_PCHCTRL_GEN(0x2UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_TC2_TC3] = GCLK_PCHCTRL_GEN(0x2UL)  | GCLK_PCHCTRL_CHEN_Msk;
+    GCLK_REGS->GCLK_PCHCTRL[GCLK_ADC0] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     //todo set WRTLOCK?
 
-    volatile uint32_t* regs_to_sync[] = {
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM0_CORE],
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM1_CORE],
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM2_CORE],
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM3_CORE],
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_TCC0_CORE],
-            &GCLK_REGS->GCLK_PCHCTRL[GCLK_TC2_TC3],
+    enum gclk_router_channels regs_to_sync[] = {
+            GCLK_SERCOM0_CORE,
+            GCLK_SERCOM1_CORE,
+            GCLK_SERCOM2_CORE,
+            GCLK_SERCOM3_CORE,
+            GCLK_TCC0_CORE,
+            GCLK_TC2_TC3,
+            GCLK_ADC0
     };
 
     for(unsigned int i = 0; i < sizeof(regs_to_sync) / sizeof(volatile uint32_t*) ; i++) {
-        while((*regs_to_sync[i] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk) {}
+        while((GCLK_REGS->GCLK_PCHCTRL[regs_to_sync[i]] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk) {}
     }
 
+    MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_TSENS_Msk;
     /* Configure the APBC Bridge Clocks */
-    MCLK_REGS->MCLK_APBCMASK = 0xfe1f;
+    MCLK_REGS->MCLK_APBCMASK = MCLK_APBCMASK_ADC0_Msk |
+            MCLK_APBCMASK_TC(4) | MCLK_APBCMASK_TC(3) | MCLK_APBCMASK_TC(2) | MCLK_APBCMASK_TC(1) | MCLK_APBCMASK_TC(0) |
+            MCLK_APBCMASK_TCC0_Msk |
+            MCLK_APBCMASK_SERCOM(3) |  MCLK_APBCMASK_SERCOM(2) | MCLK_APBCMASK_SERCOM(1) | MCLK_APBCMASK_SERCOM(0) |
+            MCLK_APBCMASK_EVSYS_Msk;
+    //0xfe1f;
 }
