@@ -4,6 +4,7 @@
 #include "sercom_usart.h"
 #include "rx/frsky_crc.h"
 #include "plib_systick.h"
+#include "plib_adc0.h"
 
 #define FPORT_START_OF_FRAME 0x7e
 #define FPORT_END_OF_FRAME 0x7e
@@ -75,7 +76,7 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
     static bool send = false;
     static uint8_t i = 0;
 
-    uint8_t data[] = {0x08, 0x81, 0x10, 0x04, 0xf1, i++, 0x0, 0x00, 0x00, 0};
+//    uint8_t data[] = {0x08, 0x81, 0x10, 0x04, 0xf1, i++, 0x0, 0x00, 0x00, 0};
     if(!fport_check(pkt)) {
         return;
     }
@@ -84,18 +85,40 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
     static char fport_print_buf[64] = {0};
     if(fport_print) {
         print_hex(fport_print_buf, pkt, fport_idx);
+    } else {
+        SYSTICK_DelayMs(1);
     }
+
 
     if(!send)
         return;
-    data[9] = frskyCheckSum(data, 8);
+//    data[9] = frskyCheckSum(data, 8);
+    union fport_response data = {
+            .len = 0x8,
+            .uplink = 0x81,
+            .type = 0x10,
+            .id = 0xf104,
+            .data = ADC0_Convert_mV()
+    };
+
+    i = (i+1) % 4;
+    switch(i) {
+        case 0:
+            data.id = 0xf104;
+            data.data = ADC0_Convert_mV();
+            break;
+        case 2:
+            data.id = 0x0400;
+            data.data = 0x69;
+            break;
+        default:
+            return;
+    }
+
+    data.crc = frskyCheckSum(data.bytes, 8);
     fport_enable_tx(true);
-    SERCOM_USART_Write(RX, data, sizeof(data));
-//    SERCOM_USART_Write_Nonblock(RX, data, sizeof (data));
-//    SERCOM_USART_TX_Wait(RX);
+    SERCOM_USART_Write(RX, data.bytes, sizeof(data));
     fport_enable_tx(false);
-
-
 }
 
 void fport_proc_packet(uint8_t* pkt) {
@@ -150,7 +173,6 @@ static enum fport_state state = FPORT_SEEKING;
 void proc_fport_rx(void) {
     //todo log dropped bytes?
     uint8_t x = fport_dma_get_byte();
-//    fport_trigger(1);
     switch(state) {
         case FPORT_SEEKING:
             fport_idx = 0;
@@ -165,6 +187,10 @@ void proc_fport_rx(void) {
             fport_idx = 0;
             if(x == FPORT_START_OF_FRAME) {
                 state = FPORT_FOUND_1;
+            }
+            else if(x == 0x19) { //hmm why does this work
+                fport_buf[fport_idx++] = x;
+                state = FPORT_FOUND;
             }
             else {
                 state = FPORT_SEEKING;
@@ -193,10 +219,9 @@ void proc_fport_rx(void) {
             }
         proc_byte:
             fport_buf[fport_idx++] = x;
-//            fport_trigger(1);
             if(fport_idx >= (fport_buf[0]+2)) {
 //            if(fport_idx >= 28) {
-                switch(fport_buf[1]) {
+                switch(fport_buf[1]) { //todo if we're in pkt timeout, stop doing telemetry frames
                     case 0:
                         fport_proc_packet(fport_buf);
 //                        fport_trigger(1);

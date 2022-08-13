@@ -63,7 +63,7 @@ void ADC0_ChannelSelect( ADC_POSINPUT positiveInput, ADC_NEGINPUT negativeInput 
 /* Start the ADC conversion by SW */
 void ADC0_ConversionStart(void) {
     ADC0_REGS->ADC_SWTRIG |= (uint8_t)ADC_SWTRIG_START_Msk;
-    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk) {}
+    //while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk) {}
 }
 
 /* Check whether auto sequence conversion is done */
@@ -119,8 +119,8 @@ bool ADC0_ConversionStatusGet(void) {
 
 int ADC0_Convert_mV(void) {
     static int voltage_measured = 0;
-    ADC0_ConversionStart();
     if(ADC0_ConversionStatusGet()) {
+        ADC0_ConversionStart();
         uint16_t adc_count = ADC0_ConversionResultGet();
         float input_voltage = (float)adc_count * ADC_SCALE * ADC_VREF / (41) /*was 4096, but I want millivolts */;
         voltage_measured = (int)input_voltage;

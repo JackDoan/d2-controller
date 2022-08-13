@@ -112,6 +112,7 @@ int main(void) {
 
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
     ADC0_Enable();
+    ADC0_ConversionStart();
 
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);
