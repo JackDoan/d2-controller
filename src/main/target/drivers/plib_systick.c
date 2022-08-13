@@ -8,7 +8,8 @@ void SYSTICK_TimerInitialize(void) {
     SysTick->CTRL = 0U;
     SysTick->VAL = 0U;
     SysTick->LOAD = 0xBB80U - 1U;
-    SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_CLKSOURCE_Msk;
+//    SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_CLKSOURCE_Msk;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
 
     systick.tickCounter = 0U;
     systick.callback = NULL;

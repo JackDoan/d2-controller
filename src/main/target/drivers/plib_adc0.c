@@ -34,34 +34,21 @@ void ADC0_Initialize(void) {
     /* Resolution & Operation Mode */
     ADC0_REGS->ADC_CTRLC = (uint16_t)(ADC_CTRLC_RESSEL_12BIT | ADC_CTRLC_WINMODE(0UL) );
 
-
     /* Clear all interrupt flags */
     ADC0_REGS->ADC_INTFLAG = (uint8_t)ADC_INTFLAG_Msk;
 
-    while(0U != ADC0_REGS->ADC_SYNCBUSY)
-    {
-        /* Wait for Synchronization */
-    }
+    while(0U != ADC0_REGS->ADC_SYNCBUSY) {}
 }
 
-/* Enable ADC module */
-void ADC0_Enable( void )
-{
+void ADC0_Enable(void) {
     ADC0_REGS->ADC_CTRLA |= (uint8_t)ADC_CTRLA_ENABLE_Msk;
-    while(0U != ADC0_REGS->ADC_SYNCBUSY)
-    {
-        /* Wait for Synchronization */
-    }
+    while(0U != ADC0_REGS->ADC_SYNCBUSY) {}
 }
 
-/* Disable ADC module */
-void ADC0_Disable( void )
-{
+
+void ADC0_Disable(void) {
     ADC0_REGS->ADC_CTRLA &= (uint8_t)(~ADC_CTRLA_ENABLE_Msk);
-    while(0U != ADC0_REGS->ADC_SYNCBUSY)
-    {
-        /* Wait for Synchronization */
-    }
+    while(0U != ADC0_REGS->ADC_SYNCBUSY) {}
 }
 
 /* Configure channel input */
@@ -69,34 +56,18 @@ void ADC0_ChannelSelect( ADC_POSINPUT positiveInput, ADC_NEGINPUT negativeInput 
 {
     /* Configure pin scan mode and positive and negative input pins */
     ADC0_REGS->ADC_INPUTCTRL = (uint16_t) positiveInput | (uint16_t) negativeInput;
-
-    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_INPUTCTRL_Msk) == ADC_SYNCBUSY_INPUTCTRL_Msk)
-    {
-        /* Wait for Synchronization */
-    }
+    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_INPUTCTRL_Msk) == ADC_SYNCBUSY_INPUTCTRL_Msk) {}
 }
 
 /* Start the ADC conversion by SW */
-void ADC0_ConversionStart( void )
-{
-    /* Start conversion */
+void ADC0_ConversionStart(void) {
     ADC0_REGS->ADC_SWTRIG |= (uint8_t)ADC_SWTRIG_START_Msk;
-
-    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk)
-    {
-        /* Wait for Synchronization */
-    }
+    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk) {}
 }
 
 /* Check whether auto sequence conversion is done */
-bool ADC0_ConversionSequenceIsFinished(void)
-{
-    bool seq_status = false;
-    if ((ADC0_REGS->ADC_SEQSTATUS & ADC_SEQSTATUS_SEQBUSY_Msk) != ADC_SEQSTATUS_SEQBUSY_Msk)
-    {
-        seq_status = true;
-    }
-    return seq_status;
+bool ADC0_ConversionSequenceIsFinished(void) {
+    return (ADC0_REGS->ADC_SEQSTATUS & ADC_SEQSTATUS_SEQBUSY_Msk) != ADC_SEQSTATUS_SEQBUSY_Msk;
 }
 
 /* Configure window comparison threshold values */
@@ -120,34 +91,36 @@ void ADC0_WindowModeSet(ADC_WINMODE mode)
 }
 
 /* Read the conversion result */
-uint16_t ADC0_ConversionResultGet( void )
-{
+uint16_t ADC0_ConversionResultGet(void) {
     return (uint16_t)ADC0_REGS->ADC_RESULT;
 }
 
-void ADC0_InterruptsClear(ADC_STATUS interruptMask)
-{
+void ADC0_InterruptsClear(ADC_STATUS interruptMask) {
     ADC0_REGS->ADC_INTFLAG = (uint8_t)interruptMask;
 }
 
-void ADC0_InterruptsEnable(ADC_STATUS interruptMask)
-{
+void ADC0_InterruptsEnable(ADC_STATUS interruptMask) {
     ADC0_REGS->ADC_INTENSET = (uint8_t)interruptMask;
 }
 
-void ADC0_InterruptsDisable(ADC_STATUS interruptMask)
-{
+void ADC0_InterruptsDisable(ADC_STATUS interruptMask) {
     ADC0_REGS->ADC_INTENCLR = (uint8_t)interruptMask;
 }
 
 /* Check whether result is ready */
-bool ADC0_ConversionStatusGet( void )
-{
-    bool status;
-    status =  (((ADC0_REGS->ADC_INTFLAG & ADC_INTFLAG_RESRDY_Msk) >> ADC_INTFLAG_RESRDY_Pos) != 0U);
-    if (status == true)
-    {
+bool ADC0_ConversionStatusGet(void) {
+    bool status =  (((ADC0_REGS->ADC_INTFLAG & ADC_INTFLAG_RESRDY_Msk) >> ADC_INTFLAG_RESRDY_Pos) != 0U);
+    if (status) {
         ADC0_REGS->ADC_INTFLAG = (uint8_t)ADC_INTFLAG_RESRDY_Msk;
     }
     return status;
+}
+
+float ADC0_Convert(void) {
+    ADC0_ConversionStart();
+    while(!ADC0_ConversionStatusGet()) {};
+
+    uint16_t adc_count = ADC0_ConversionResultGet();
+    float input_voltage = (float)adc_count * ADC_VREF / 4095U;
+    return input_voltage;
 }

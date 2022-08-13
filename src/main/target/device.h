@@ -30,10 +30,11 @@
 void motors_set_enable(bool enabled);
 
 enum motor_channel {
-    MOTOR1,
+    MOTOR1 = 0,
     MOTOR2,
     MOTOR3,
-    MOTOR4
+    MOTOR4,
+    MOTOR_COUNT
 };
 
 void motor_enable(enum motor_channel channel, bool enable);

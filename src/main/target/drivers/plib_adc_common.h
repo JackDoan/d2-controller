@@ -45,14 +45,6 @@
 #ifndef PLIB_ADC_COMMON_H    // Guards against multiple inclusion
 #define PLIB_ADC_COMMON_H
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files
-// *****************************************************************************
-// *****************************************************************************
-/* This section lists the other files that are included in this file.
-*/
-
 #include <stdbool.h>
 #include <stddef.h>
 

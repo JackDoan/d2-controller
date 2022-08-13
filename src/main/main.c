@@ -10,17 +10,15 @@
 #include "timer.h"
 #include "plib_adc0.h"
 #include "plib_systick.h"
+#include "l9958.h"
 
-char dingdong[32] = {0};
+
 uint8_t spi_rx[2] = {0};
 
-void spi_callback(uintptr_t context) {
-    sprintf(dingdong, "%02x %02x\r\n", spi_rx[0], spi_rx[1]);
-    serial_puts(dingdong);
-}
+
 uint8_t x[4] = {0};
 
-static uint8_t spi_tx[4] = {0b00001110, 0b00000000};
+char cmd_resp_buf[64] = {0};
 
 void cmd_prompt(char cmd) {
     switch(cmd) {
@@ -60,14 +58,22 @@ void cmd_prompt(char cmd) {
             PORT_PinToggle(DIR3);
             break;
         case 's':
-            SERCOM_SPI_WriteRead(CS3, spi_tx, 2, spi_rx, 2);
-            while(SERCOM_SPI_IsBusy(SPI)) {}
+//            SERCOM_SPI_WriteRead(CS3, spi_tx, 2, spi_rx, 2);
+//            while(SERCOM_SPI_IsBusy(SPI)) {}
+
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "\r\n1: %04x\r\n2: %04x\r\n3: %04x\r\n4: %04x\r\n",
+                     L9958_Diag_Read(MOTOR1), L9958_Diag_Read(MOTOR2),
+                     L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
+            serial_puts(cmd_resp_buf);
             break;
         case 'p':
             fport_enable_printing(true);
             break;
         case 'P':
             fport_enable_printing(false);
+            break;
+        case 'a':
+            ADC0_Convert();
             break;
         default:
             break;
@@ -89,10 +95,13 @@ static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
 
 }
 
+
+
 int main(void) {
     NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3); //needed so when we clock up we don't outrun flash
     PORT_Initialize();
     CLOCK_Initialize();
+    SYSTICK_TimerInitialize();
     SYSTICK_TimerStart();
     DMAC_Initialize();
     DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, uartRxCallback, (uintptr_t) &ftdiRead);
@@ -102,19 +111,26 @@ int main(void) {
     TCC0_PWMInitialize();
 
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
+    ADC0_Enable();
 
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);
-    SERCOM_SPI_Initialize(SPI);
+    L9958_Init();
 
-    SERCOM_SPI_CallbackRegister(spi_callback, (uintptr_t)FTDI);
+
     //todo read reset-cause?
     //todo set PAC after configuring peripherals
     //todo watchdog
     //todo periodic spi polling
-    //todo ADC for vbat
+    //todo poll ADC for vbat
     //todo telemetry
     //todo mcu temp sensor
+
+//    /* Make stdin unbuffered */
+//    setbuf(stdin, NULL);
+//
+//    /* Make stdout unbuffered */
+//    setbuf(stdout, NULL);
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
@@ -130,6 +146,7 @@ int main(void) {
             rxRead = false;
             proc_fport_rx();
         }
+        L9958_Tick();
     }
 }
 

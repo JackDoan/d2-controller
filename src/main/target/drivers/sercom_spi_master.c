@@ -8,10 +8,7 @@
 static SPI_OBJECT sercomSPIObj;
 
 inline static void spi_sync(sercom_registers_t* sercom) {
-    while((sercom->SPIM.SERCOM_SYNCBUSY) != 0U)
-    {
-        /* Do nothing */
-    }
+    while((sercom->SPIM.SERCOM_SYNCBUSY) != 0U) {}
 }
 
 void SERCOM_SPI_Initialize(sercom_registers_t* sercom) {
@@ -47,57 +44,12 @@ void SERCOM_SPI_Initialize(sercom_registers_t* sercom) {
     spi_sync(sercom);
 }
 
-// *****************************************************************************
-/* Function:
-    void SERCOM_SPI_CallbackRegister(const SERCOM_SPI_CALLBACK* callBack,
-                                                    uintptr_t context);
-
-  Summary:
-    Allows application to register callback with PLIB.
-
-  Description:
-    This function allows application to register an event handling function
-    for the PLIB to call back when requested data exchange operation has
-    completed or any error has occurred.
-    The callback should be registered before the client performs exchange
-    operation.
-    At any point if application wants to stop the callback, it can use this
-    function with "callBack" value as NULL.
-
-  Remarks:
-    Refer plib_sercom1_spi.h file for more information.
-*/
-
-void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack, uintptr_t context )
-{
+void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack, uintptr_t context) {
     sercomSPIObj.callback = callBack;
     sercomSPIObj.context = context;
 }
 
-// *****************************************************************************
-/* Function:
-    bool SERCOM_SPI_IsBusy(void);
-
-  Summary:
-    Returns transfer status of SERCOM SERCOM1SPI.
-
-  Description:
-    This function ture if the SERCOM SERCOM1SPI module is busy with a transfer. The
-    application can use the function to check if SERCOM SERCOM1SPI module is busy
-    before calling any of the data transfer functions. The library does not
-    allow a data transfer operation if another transfer operation is already in
-    progress.
-
-    This function can be used as an alternative to the callback function when
-    the library is operating interrupt mode. The allow the application to
-    implement a synchronous interface to the library.
-
-  Remarks:
-    Refer plib_sercom1_spi.h file for more information.
-*/
-
-bool SERCOM_SPI_IsBusy(sercom_registers_t* sercom)
-{
+bool SERCOM_SPI_IsBusy(sercom_registers_t* sercom) {
     if ((sercomSPIObj.txSize == 0U) && (sercomSPIObj.rxSize == 0U)) {
         /* This means no transfer has been requested yet; hence SPI is not busy. */
         return false;
@@ -106,47 +58,11 @@ bool SERCOM_SPI_IsBusy(sercom_registers_t* sercom)
     return SERCOM_SPI_IsTransmitterBusy(sercom) || sercomSPIObj.transferIsBusy;
 }
 
-bool SERCOM_SPI_IsTransmitterBusy(sercom_registers_t* sercom)
-{
+bool SERCOM_SPI_IsTransmitterBusy(sercom_registers_t* sercom) {
     return (sercom->SPIM.SERCOM_INTFLAG & SERCOM_SPIM_INTFLAG_TXC_Msk) == 0U;
 }
 
-// *****************************************************************************
-/* Function:
-    bool SERCOM_SPI_WriteRead (void* pTransmitData, size_t txSize
-                                        void* pReceiveData, size_t rxSize);
-
-  Summary:
-    Write and Read data on SERCOM SERCOM1 SPI peripheral.
-
-  Description:
-    This function transmits "txSize" number of bytes and receives "rxSize"
-    number of bytes on SERCOM SERCOM1 SPI module. Data pointed by pTransmitData is
-    transmitted and received data is saved in the location pointed by
-    pReceiveData. The function will transfer the maximum of "txSize" or "rxSize"
-    data units towards completion.
-
-    When "Interrupt Mode" option is unchecked in MHC, this function will be
-    blocking in nature.  In this mode, the function will not return until all
-    the requested data is transferred.  The function returns true after
-    transferring all the data.  This indicates that the operation has been
-    completed.
-
-    The function returns immediately. The data transfer process continues in the peripheral interrupt.
-    The application specified transmit and receive buffer  are owned by the library until the data
-    transfer is complete and should not be modified by the application till the
-    transfer is complete.  Only one transfer is allowed at any time. The
-    Application can use a callback function or a polling function to check for
-    completion of the transfer. If a callback is required, this should be
-    registered prior to calling the SERCOM_SPI_WriteRead() function. The
-    application can use the SERCOM_SPI_IsBusy() to poll for completion.
-
-  Remarks:
-    Refer plib_sercom1_spi.h file for more information.
-*/
-
-bool SERCOM_SPI_WriteRead(PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize)
-{
+bool SERCOM_SPI_WriteRead(PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize) {
     sercom_registers_t* sercom = SPI;
     /* Verify the request */
     if (
