@@ -117,11 +117,14 @@ bool ADC0_ConversionStatusGet(void) {
     return status;
 }
 
-float ADC0_Convert_mV(void) {
+int ADC0_Convert_mV(void) {
+    static int voltage_measured = 0;
     ADC0_ConversionStart();
-    while(!ADC0_ConversionStatusGet()) {};
+    if(ADC0_ConversionStatusGet()) {
+        uint16_t adc_count = ADC0_ConversionResultGet();
+        float input_voltage = (float)adc_count * ADC_SCALE * ADC_VREF / (41) /*was 4096, but I want millivolts */;
+        voltage_measured = (int)input_voltage;
+    }
 
-    uint16_t adc_count = ADC0_ConversionResultGet();
-    float input_voltage = (float)adc_count * ADC_SCALE * ADC_VREF / (41) /*was 4096, but I want millivolts */;
-    return input_voltage;
+    return voltage_measured;
 }

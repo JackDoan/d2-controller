@@ -23,7 +23,7 @@ void ADC0_InterruptsClear(ADC_STATUS interruptMask);
 void ADC0_InterruptsEnable(ADC_STATUS interruptMask);
 void ADC0_InterruptsDisable(ADC_STATUS interruptMask);
 bool ADC0_ConversionStatusGet(void);
-float ADC0_Convert_mV(void);
+int ADC0_Convert_mV(void);
 
 #ifdef __cplusplus  // Provide C++ Compatibility
     }
