@@ -26,6 +26,7 @@ static void GCLK0_Initialize(void) {
 }
 
 enum gclk_router_channels {
+    GCLK_TSENS = 5,
     GCLK_SERCOM0_CORE = 19,
     GCLK_SERCOM1_CORE = 20,
     GCLK_SERCOM2_CORE = 21,
@@ -45,6 +46,7 @@ void CLOCK_Initialize (void) {
 
     GCLK0_Initialize();
 
+    GCLK_REGS->GCLK_PCHCTRL[GCLK_TSENS] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM0_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM1_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
     GCLK_REGS->GCLK_PCHCTRL[GCLK_SERCOM2_CORE] = GCLK_PCHCTRL_GEN(0x0UL)  | GCLK_PCHCTRL_CHEN_Msk;
@@ -55,6 +57,7 @@ void CLOCK_Initialize (void) {
     //todo set WRTLOCK?
 
     enum gclk_router_channels regs_to_sync[] = {
+            GCLK_TSENS,
             GCLK_SERCOM0_CORE,
             GCLK_SERCOM1_CORE,
             GCLK_SERCOM2_CORE,

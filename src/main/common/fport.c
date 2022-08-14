@@ -73,6 +73,7 @@ union __attribute__((packed)) fport_response {
 void fport_proc_telemetry_req(uint8_t* pkt) {
 
     //note: very timing sensitive. Looks like if you change the order of this, it breaks :(
+    //bug: this stops working after failsafing?
     static bool send = false;
     static uint8_t i = 0;
 
@@ -109,7 +110,7 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
             break;
         case 2:
             data.id = 0x0400;
-            data.data = 0x69;
+            data.data = TSENS_Get();
             break;
         default:
             return;

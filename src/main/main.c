@@ -65,7 +65,7 @@ void cmd_prompt(char cmd) {
             fport_enable_printing(false);
             break;
         case 'a':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\n", ADC0_Convert_mV());
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\nTSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
             serial_puts(cmd_resp_buf);
             break;
         case 't':
@@ -113,6 +113,8 @@ int main(void) {
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
     ADC0_Enable();
     ADC0_ConversionStart();
+
+    TSENS_Init();
 
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);

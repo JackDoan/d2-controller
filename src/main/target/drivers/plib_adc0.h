@@ -25,6 +25,9 @@ void ADC0_InterruptsDisable(ADC_STATUS interruptMask);
 bool ADC0_ConversionStatusGet(void);
 int ADC0_Convert_mV(void);
 
+void TSENS_Init(void);
+uint32_t TSENS_Get(void);
+
 #ifdef __cplusplus  // Provide C++ Compatibility
     }
 #endif

@@ -85,10 +85,7 @@ void ADC0_ComparisonWindowSet(uint16_t low_threshold, uint16_t high_threshold)
 void ADC0_WindowModeSet(ADC_WINMODE mode)
 {
 	ADC0_REGS->ADC_CTRLC =  (ADC0_REGS->ADC_CTRLC & (uint16_t)(~ADC_CTRLC_WINMODE_Msk)) | (uint16_t)((uint32_t)mode << ADC_CTRLC_WINMODE_Pos);
-    while(0U != (ADC0_REGS->ADC_SYNCBUSY))
-    {
-        /* Wait for Synchronization */
-    }
+    while(0U != (ADC0_REGS->ADC_SYNCBUSY)) { }
 }
 
 /* Read the conversion result */
@@ -127,4 +124,35 @@ int ADC0_Convert_mV(void) {
     }
 
     return voltage_measured;
+}
+
+__PACKED_STRUCT tsens_cal{
+    uint8_t tcal:6;
+    uint8_t fcal:6;
+    uint32_t gain:24;
+    uint32_t offset:24;
+    uint8_t rsvd:4;
+};
+
+void TSENS_Init(void) {
+    TSENS_REGS->TSENS_CTRLA = TSENS_CTRLA_SWRST_Msk;
+    while(0U != (TSENS_REGS->TSENS_SYNCBUSY)) { }
+    TSENS_REGS->TSENS_DBGCTRL = TSENS_DBGCTRL_Msk;
+    TSENS_REGS->TSENS_CTRLC |= TSENS_CTRLC_FREERUN_Msk;
+
+    struct tsens_cal* cal = (struct tsens_cal*)TEMP_LOG_ADDR;
+//    uint32_t calib_low_word = (uint32_t)(*(uint32_t*)TEMP_LOG_ADDR);
+//    uint32_t calib_hi_word = (uint32_t)(*(uint32_t*)TEMP_LOG_ADDR+4);
+
+
+    TSENS_REGS->TSENS_CAL = (cal->tcal << 8) | cal->fcal;
+    TSENS_REGS->TSENS_GAIN = cal->gain;
+    TSENS_REGS->TSENS_OFFSET = cal->offset;
+
+    TSENS_REGS->TSENS_CTRLA |= TSENS_CTRLA_ENABLE_Msk;
+    TSENS_REGS->TSENS_CTRLB |= TSENS_CTRLB_START_Msk;
+}
+
+uint32_t TSENS_Get(void) {
+    return TSENS_REGS->TSENS_VALUE;
 }
