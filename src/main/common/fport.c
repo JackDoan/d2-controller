@@ -159,10 +159,10 @@ void fport_proc_packet(uint8_t* pkt) {
     }
 
     motors_set_enable(true); //todo disable per-motor?
-    motor_set_speed(MOTOR3, frame->chan0);
+    //motor_set_speed(MOTOR3, frame->chan0);
     motor_set_speed(MOTOR1, frame->chan0);
     motor_set_speed(MOTOR2, frame->chan1);
-    //todo motor_set_speed(MOTOR3, frame->chan2);
+    motor_set_speed(MOTOR3, frame->chan2);
     motor_set_speed(MOTOR4, frame->chan3);
 
     if(fport_print) {
