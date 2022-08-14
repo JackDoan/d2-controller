@@ -5,7 +5,7 @@
 
 #define FPORT_TX_PIN PORT_PIN_PA08
 
-const int sbus_max = 2047;
+const int sbus_max = 1750;
 const int sbus_mid = 992;
 const int sbus_min = 0;
 const int sbus_center_deadband = 5;
@@ -44,7 +44,7 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     uint32_t abs_val = abs(val);
     motor_enable(channel, abs_val > sbus_center_deadband);
     PORT_PinWrite(dir_pins[channel], dir);
-    *duty_cycles[channel] = abs_val;
+    *duty_cycles[channel] = (abs_val * TCC0_REGS->TCC_PER) / (sbus_max-sbus_mid);
 }
 
 #define PACKET_TIMEOUT_MAX_COUNT 500

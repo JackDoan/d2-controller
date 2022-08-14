@@ -11,7 +11,7 @@
 #include "plib_adc0.h"
 #include "plib_systick.h"
 #include "l9958.h"
-
+#include "plib_wdt.h"
 
 char cmd_resp_buf[64] = {0};
 
@@ -116,16 +116,16 @@ int main(void) {
 
     TSENS_Init();
 
+    WDT_Enable();
+
     SERCOM_USART_Initialize(FTDI);
     SERCOM_USART_Initialize(RX);
     L9958_Init();
 
-    //todo read reset-cause?
+    //todo read reset-cause, send telem?
     //todo set PAC after configuring peripherals
-    //todo watchdog
-    //todo poll ADC for vbat
-    //todo telemetry
-    //todo mcu temp sensor
+    //todo shorten wdog
+    //todo calibration
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
@@ -140,7 +140,8 @@ int main(void) {
             rxRead = false;
             proc_fport_rx();
         }
-        //L9958_Tick();
+        L9958_Tick();
+        WDT_Clear();
     }
 }
 
