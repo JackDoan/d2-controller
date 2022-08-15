@@ -81,13 +81,21 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
         return;
     }
     send = !send;
+/*
+ * why he jump
+ * (236157) 1900e0031ff8c0c70af0810f7c08400002108000042000010062f7
+(236165) 1900c000000000c0800f000060f97e7e080110000000000000e67e
+1900e00280800700010e7c00000000000046147e7e080110000000
+ (400350) 1900e60b5ff8ccc70af0810f7c08400002108000042000010059a6
+(400358) 1900c0008004e0000e7c00005a607e7e080110000000000000e67e
 
+ */
     static char fport_print_buf[64] = {0};
-    if(fport_print) {
-        print_hex(fport_print_buf, pkt, fport_idx);
-    } else {
+//    if(fport_print) {
+//        print_hex(fport_print_buf, pkt, fport_idx);
+//    } else {
         SYSTICK_DelayMs(1);
-    }
+//    }
 
 
     if(!send)
@@ -189,7 +197,7 @@ void fport_proc_packet(uint8_t* pkt) {
     motor_set_speed(MOTOR4, frame->chan3);
 
     if(fport_print) {
-//        print_hex(fport_print_buf, pkt, fport_idx/2);
+        print_hex(fport_print_buf, pkt, fport_idx);
     }
 }
 

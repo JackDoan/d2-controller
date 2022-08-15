@@ -117,18 +117,6 @@ uint16_t L9958_Diag_Read(enum motor_channel channel) {
     return g_context.rx_buf[channel].word;
 }
 
-uint32_t L9958_Telemetry(void) {
-    uint32_t out = 0;
-    out |= compress(g_context.rx_buf[MOTOR4]).byte << 24;
-//    out |= compress(g_context.rx_buf[MOTOR3]).byte << 16;
-//    out |= compress(g_context.rx_buf[MOTOR2]).byte << 8;
-//    out |= compress(g_context.rx_buf[MOTOR1]).byte;
-//    out.bytes[MOTOR3] = compress(g_context.rx_buf[MOTOR3]).byte;
-//    out.bytes[MOTOR2] = compress(g_context.rx_buf[MOTOR2]).byte;
-//    out.bytes[MOTOR1] = compress(g_context.rx_buf[MOTOR1]).byte;
-    return out;
-}
-
 void L9958_Init(void) {
     SERCOM_SPI_Initialize(SPI);
     SERCOM_SPI_CallbackRegister(spi_callback, (uintptr_t)FTDI);

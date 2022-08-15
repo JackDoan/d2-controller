@@ -8,7 +8,7 @@
 const int sbus_max = 1750;
 const int sbus_mid = 992;
 const int sbus_min = 0;
-const int sbus_center_deadband = 6;
+const int sbus_center_deadband = 3;
 
 void motors_set_enable(bool enabled) {
     //const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);

@@ -34,7 +34,10 @@ void TCC0_PWMInitialize(void)
     TCC0_REGS->TCC_CC[1] = 0;
     TCC0_REGS->TCC_CC[2] = 0;
     TCC0_REGS->TCC_CC[3] = 0;
-    TCC0_REGS->TCC_PER = 1200;  //hmm making this the same as sbus seems... handy
+    //1200 works out to like exactly 20kHz
+    //2000 1420
+    //3000 1440
+    TCC0_REGS->TCC_PER = 1300;
 
     TCC0_REGS->TCC_INTENSET = TCC_INTENSET_OVF_Msk;
     TCC0_REGS->TCC_DBGCTRL |= TCC_DBGCTRL_DBGRUN_Msk;
