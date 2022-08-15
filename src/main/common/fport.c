@@ -153,7 +153,7 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
     SERCOM_USART_Write(RX, data.bytes, sizeof(data));
     fport_enable_tx(false);
 }
-
+static uint32_t rssi_invalid = 0;
 void fport_proc_packet(uint8_t* pkt) {
     static char fport_print_buf[64] = {0};
     struct fport_frame *frame = (struct fport_frame *)pkt;
@@ -164,6 +164,12 @@ void fport_proc_packet(uint8_t* pkt) {
         crc_fail++;
         return;
     }
+
+    if(frame->rssi > 100 || frame->rssi < 10) {
+        rssi_invalid++;
+        return;
+    }
+
     packet_timer_watchdog_feed();
 
     if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
@@ -220,10 +226,10 @@ void proc_fport_rx(void) {
             if(x == FPORT_START_OF_FRAME) {
                 state = FPORT_FOUND_1;
             }
-            else if(x == 0x19) { //hmm why does this work
-                fport_buf[fport_idx++] = x;
-                state = FPORT_FOUND;
-            }
+//            else if(x == 0x19) { //hmm why does this work
+//                fport_buf[fport_idx++] = x;
+//                state = FPORT_FOUND;
+//            }
             else {
                 state = FPORT_SEEKING;
             }
@@ -252,11 +258,9 @@ void proc_fport_rx(void) {
         proc_byte:
             fport_buf[fport_idx++] = x;
             if(fport_idx >= (fport_buf[0]+2)) {
-//            if(fport_idx >= 28) {
                 switch(fport_buf[1]) { //todo if we're in pkt timeout, stop doing telemetry frames
                     case 0:
                         fport_proc_packet(fport_buf);
-//                        fport_trigger(1);
                         break;
                     case 1:
                         fport_proc_telemetry_req(fport_buf);
