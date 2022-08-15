@@ -5,6 +5,7 @@
 #include "rx/frsky_crc.h"
 #include "plib_systick.h"
 #include "plib_adc0.h"
+#include "l9958.h"
 
 #define FPORT_START_OF_FRAME 0x7e
 #define FPORT_END_OF_FRAME 0x7e
@@ -56,7 +57,8 @@ void print_hex(void* buf, uint8_t* pkt, int len) {
     serial_puts(buf);
 }
 #define T1_FIRST_ID               0x0400 // -> 0004
-#define BATT_ID                   0xF104 // -> 04f1
+#define BATT_ID                   0xF104
+
 
 union __attribute__((packed)) fport_response {
     struct __attribute__((packed)) {
@@ -71,13 +73,10 @@ union __attribute__((packed)) fport_response {
 };
 
 void fport_proc_telemetry_req(uint8_t* pkt) {
-
-    //note: very timing sensitive. Looks like if you change the order of this, it breaks :(
-    //bug: this stops working after failsafing?
+    //note: very timing sensitive. Don't remove the delay
     static bool send = false;
     static uint8_t i = 0;
 
-//    uint8_t data[] = {0x08, 0x81, 0x10, 0x04, 0xf1, i++, 0x0, 0x00, 0x00, 0};
     if(!fport_check(pkt)) {
         return;
     }
@@ -98,19 +97,44 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
             .len = 0x8,
             .uplink = 0x81,
             .type = 0x10,
-            .id = 0xf104,
-            .data = ADC0_Convert_mV()
     };
 
-    i = (i+1) % 4;
-    switch(i) {
+    i = (i+1) % 16;
+    if(i & 1) {
+        return;
+    }
+    switch(i/2) {
         case 0:
-            data.id = 0xf104;
+            data.id = 0x6900;
             data.data = ADC0_Convert_mV();
             break;
-        case 2:
-            data.id = 0x0400;
+        case 1:
+            data.id = 0x6901;
             data.data = TSENS_Get();
+            break;
+        case 2:
+            data.id = 0x6902;
+            data.data = RSTC_ResetCauseGet().byte;
+            break;
+        case 3:
+            data.id = 0x6903;
+            data.data = SYSTICK_GetTickCounter();
+            break;
+        case 4:
+            data.id = 0x6911;
+            data.data = L9958_Diag_Read(MOTOR1);
+            break;
+        case 5:
+            data.id = 0x6912;
+            data.data = L9958_Diag_Read(MOTOR2);
+            break;
+        case 6:
+            data.id = 0x6913;
+            data.data = L9958_Diag_Read(MOTOR3);
+            break;
+        case 7:
+            data.id = 0x6914;
+            data.data = L9958_Diag_Read(MOTOR4);
             break;
         default:
             return;
@@ -158,8 +182,7 @@ void fport_proc_packet(uint8_t* pkt) {
 
     }
 
-    motors_set_enable(true); //todo disable per-motor?
-    //motor_set_speed(MOTOR3, frame->chan0);
+    do_brakes(frame->chan4);
     motor_set_speed(MOTOR1, frame->chan0);
     motor_set_speed(MOTOR2, frame->chan1);
     motor_set_speed(MOTOR3, frame->chan2);

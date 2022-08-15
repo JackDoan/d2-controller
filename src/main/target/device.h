@@ -39,6 +39,7 @@ enum motor_channel {
 
 void motor_enable(enum motor_channel channel, bool enable);
 void motor_set_speed(enum motor_channel channel, int sbus_val);
+void do_brakes(int sbus_val);
 void failsafe_activate(void);
 void packet_timer_watchdog_tick(void);
 void packet_timer_watchdog_feed(void);

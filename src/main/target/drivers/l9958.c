@@ -1,8 +1,7 @@
 #include "l9958.h"
 #include "device.h"
 #include "sercom_spi_master.h"
-
-
+#include "common/utils.h"
 
 
 union l9958_config {
@@ -57,6 +56,35 @@ union l9958_diag {
     uint16_t word;
 };
 
+union l9958_diag_small {
+    struct {
+        bool open_load: 1;
+        bool vbatt_uv: 1;
+        bool vdd_ov: 1;
+        bool current_limit_active: 1;
+
+        bool overtemp: 1;
+        bool bridge_active: 1;
+        bool overcurrent: 1;
+        bool output_short: 1;
+    };
+    uint8_t byte;
+};
+
+static union l9958_diag_small compress(union l9958_diag in) {
+    union l9958_diag_small out = {
+            .open_load = in.open_load_off | in.open_load_on,
+            .vbatt_uv = in.vbatt_uv,
+            .vdd_ov = in.vdd_ov,
+            .current_limit_active = in.current_limit_active,
+            .overtemp = in.temp_warn | in.temp_shutdown,
+            .bridge_active = in.bridge_active,
+            .overcurrent = in.oc_hs1 | in.os_hs2 | in.oc_ls1 | in.oc_ls2,
+            .output_short = in.short_to_batt_off | in.short_to_gnd_off
+    };
+    return out;
+}
+
 static union l9958_config config_data = {
         .diag_reset = 1,
         .cl1 = 1,
@@ -87,6 +115,18 @@ static void spi_callback(uintptr_t context) {
 
 uint16_t L9958_Diag_Read(enum motor_channel channel) {
     return g_context.rx_buf[channel].word;
+}
+
+uint32_t L9958_Telemetry(void) {
+    uint32_t out = 0;
+    out |= compress(g_context.rx_buf[MOTOR4]).byte << 24;
+//    out |= compress(g_context.rx_buf[MOTOR3]).byte << 16;
+//    out |= compress(g_context.rx_buf[MOTOR2]).byte << 8;
+//    out |= compress(g_context.rx_buf[MOTOR1]).byte;
+//    out.bytes[MOTOR3] = compress(g_context.rx_buf[MOTOR3]).byte;
+//    out.bytes[MOTOR2] = compress(g_context.rx_buf[MOTOR2]).byte;
+//    out.bytes[MOTOR1] = compress(g_context.rx_buf[MOTOR1]).byte;
+    return out;
 }
 
 void L9958_Init(void) {

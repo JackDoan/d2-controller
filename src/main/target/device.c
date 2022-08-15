@@ -8,11 +8,16 @@
 const int sbus_max = 1750;
 const int sbus_mid = 992;
 const int sbus_min = 0;
-const int sbus_center_deadband = 5;
+const int sbus_center_deadband = 6;
 
 void motors_set_enable(bool enabled) {
-    const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
-    PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
+    //const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
+    //PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
+    motor_enable(MOTOR1, enabled);
+    motor_enable(MOTOR2, enabled);
+    motor_enable(MOTOR3, enabled);
+    motor_enable(MOTOR4, enabled);
+
 }
 
 void failsafe_activate(void) {
@@ -37,14 +42,27 @@ void motor_enable(enum motor_channel channel, bool enable) {
     PORT_PinWrite(enable_pins[channel], enable);
 }
 
+void do_brakes(int sbus_val) {
+    //if pressed -> ~1800
+    //unpressed -> 992
+    bool button_not_pressed = sbus_val < 1100;
+    motors_set_enable(button_not_pressed);
+}
+
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
-    //todo deadbanding
     int val = sbus_val-sbus_mid;
     bool dir = val > 0;
     uint32_t abs_val = abs(val);
-    motor_enable(channel, abs_val > sbus_center_deadband);
+    bool outside_deadband = abs_val > sbus_center_deadband;
+    uint32_t duty_cycle;
+    if(outside_deadband) {
+        duty_cycle = (abs_val * TCC0_REGS->TCC_PER) / (sbus_max-sbus_mid);
+    }
+    else {
+        duty_cycle = 0;
+    }
+    *duty_cycles[channel] = duty_cycle;
     PORT_PinWrite(dir_pins[channel], dir);
-    *duty_cycles[channel] = (abs_val * TCC0_REGS->TCC_PER) / (sbus_max-sbus_mid);
 }
 
 #define PACKET_TIMEOUT_MAX_COUNT 500

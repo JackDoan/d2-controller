@@ -108,3 +108,13 @@ void * memcpy_fn ( void * destination, const void * source, size_t num ) asm("me
 #define ALIGNED(x) __attribute__ ((aligned(x)))
 
 #define PACKED __attribute__((packed))
+
+union PACKED u32bytes {
+    struct {
+        uint8_t b0;
+        uint8_t b1;
+        uint8_t b2;
+        uint8_t b3;
+    };
+    uint32_t val;
+};
