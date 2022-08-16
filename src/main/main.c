@@ -75,6 +75,10 @@ void cmd_prompt(char cmd) {
         case 'r':
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "Reset Cause: %s\r\n", RSTC_ResetCauseGetStr());
             serial_puts(cmd_resp_buf);
+            break;
+        case 'W':
+            serial_puts("watchdog test\r\n");
+            for(;;) {}
         default:
             break;
     }
@@ -122,10 +126,10 @@ int main(void) {
     SERCOM_USART_Initialize(RX);
     L9958_Init();
 
-    //todo read reset-cause, send telem?
     //todo set PAC after configuring peripherals
-    //todo shorten wdog
-    //todo calibration
+    //todo calibration of pulse len
+    //todo improve CRC error rate?
+    //todo configure brown-out detector
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
@@ -140,7 +144,7 @@ int main(void) {
             rxRead = false;
             proc_fport_rx();
         }
-        L9958_Tick();
+        L9958_Tick(); //todo is it faster to not use interrupts?
         WDT_Clear();
     }
 }
