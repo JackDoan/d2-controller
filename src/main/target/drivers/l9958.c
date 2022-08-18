@@ -109,7 +109,7 @@ void do_config_transaction(enum motor_channel channel) {
     );
 }
 
-static void spi_callback(uintptr_t context) {
+static void spi_callback(void) {
     g_context.active = (g_context.active + 1) % MOTOR_COUNT;
 }
 
@@ -119,7 +119,7 @@ uint16_t L9958_Diag_Read(enum motor_channel channel) {
 
 void L9958_Init(void) {
     SERCOM_SPI_Initialize(SPI);
-    SERCOM_SPI_CallbackRegister(spi_callback, (uintptr_t)FTDI);
+    SERCOM_SPI_CallbackRegister(spi_callback);
 }
 
 void L9958_Tick(void) {

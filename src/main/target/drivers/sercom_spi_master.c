@@ -44,9 +44,8 @@ void SERCOM_SPI_Initialize(sercom_registers_t* sercom) {
     spi_sync(sercom);
 }
 
-void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack, uintptr_t context) {
+void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack) {
     sercomSPIObj.callback = callBack;
-    sercomSPIObj.context = context;
 }
 
 bool SERCOM_SPI_IsBusy(sercom_registers_t* sercom) {
@@ -189,7 +188,7 @@ void SERCOM_SPI_InterruptHandler(void) {
                 isLastByteTransferInProgress = false;
 
                 if(sercomSPIObj.callback != NULL) {
-                    sercomSPIObj.callback(sercomSPIObj.context);
+                    sercomSPIObj.callback();
                 }
             }
         }

@@ -1,4 +1,4 @@
-#ifndef PLIB_SERCOM_SPI_MASTER_H // Guards against multiple inclusion
+#ifndef PLIB_SERCOM_SPI_MASTER_H
 #define PLIB_SERCOM_SPI_MASTER_H
 
 #include <stdint.h>
@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-typedef void (*SERCOM_SPI_CALLBACK)(uintptr_t context);
+typedef void (*SERCOM_SPI_CALLBACK)(void);
 
 typedef struct {
     void *                   txBuffer;
@@ -24,7 +24,6 @@ typedef struct {
     size_t                   txCount;
     bool                     transferIsBusy;
     SERCOM_SPI_CALLBACK      callback;
-    uintptr_t                context;
     uint32_t                 status;
     PORT_PIN                 cs_line;
 } SPI_OBJECT;
@@ -354,71 +353,8 @@ bool SERCOM_SPI_Write(sercom_registers_t* sercom, void* pTransmitData, size_t tx
 
 bool SERCOM_SPI_Read(sercom_registers_t* sercom, void* pReceiveData, size_t rxSize);
 
-// *****************************************************************************
-/* Function:
-    void SERCOM_SPI_CallbackRegister(const SERCOM_SPI_CALLBACK* callBack,
-                                                    uintptr_t context);
 
-  Summary:
-    Allows application to register callback with PLIB.
-
-  Description:
-    This function allows application to register an event handling function
-    for the PLIB to call back when requested data exchange operation has
-    completed or any error has occurred.
-    The callback should be registered before the client performs exchange
-    operation.
-    At any point if application wants to stop the callback, it can use this
-    function with "callBack" value as NULL.
-
-  Precondition:
-    The SERCOM_SPI_Initialize function must have been called.
-
-  Parameters:
-    callBack - Pointer to the event handler function implemented by the
-               user .
-
-    context - The value of parameter will be passed back to the application
-              unchanged, when the callBack function is called. It can
-              be used to identify any application specific data object that
-              identifies the instance of the client module (for example,
-              it may be a pointer to the client module's state structure).
-
-  Returns:
-    None.
-
-  Example:
-    <code>
-    uint8_t txBuffer[10];
-    uint8_t rxBuffer[10];
-    size_t txSize = 10;
-    size_t rxSize = 10;
-
-    SERCOM_SPI_Initialize();
-
-    SERCOM_SPI_CallbackRegister(&APP_SPICallBack, (uintptr_t)NULL);
-
-    if(SERCOM_SPI_WriteRead(&txBuffer, txSize, &rxBuffer, rxSize ))
-    {
-        request got accepted
-    }
-    else
-    {
-        request didn't get accepted, try again later with correct arguments
-    }
-
-    void APP_SPICallBack(uintptr_t contextHandle)
-    {
-        Exchange was completed without error, do something else.
-    }
-    </code>
-
-  Remarks:
-    If the client does not want to be notified when the queued operation
-    has completed, it does not need to register a callback.
-*/
-
-void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack, uintptr_t context);
+void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack);
 
 // *****************************************************************************
 /* Function:

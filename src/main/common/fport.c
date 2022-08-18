@@ -50,11 +50,12 @@ bool fport_check(uint8_t* pkt) {
 }
 
 void print_hex(void* buf, uint8_t* pkt, int len) {
+    char* str = (char*)buf;
     for (int i = 0; i < len; i++) {
-        sprintf(&(buf[(2 * i)]), "%02x", pkt[i]);
+        sprintf(&(str[(2 * i)]), "%02x", pkt[i]);
     }
-    sprintf(&(buf[(2 * len)]), "\r\n");
-    serial_puts(buf);
+    sprintf(&(str[(2 * len)]), "\r\n");
+    serial_puts(str);
 }
 #define T1_FIRST_ID               0x0400 // -> 0004
 #define BATT_ID                   0xF104
@@ -90,7 +91,7 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
 (400358) 1900c0008004e0000e7c00005a607e7e080110000000000000e67e
 
  */
-    static char fport_print_buf[64] = {0};
+//    static char fport_print_buf[64] = {0};
 //    if(fport_print) {
 //        print_hex(fport_print_buf, pkt, fport_idx);
 //    } else {
