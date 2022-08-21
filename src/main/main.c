@@ -12,6 +12,7 @@
 #include "plib_systick.h"
 #include "l9958.h"
 #include "plib_wdt.h"
+#include "plib_nvmctrl.h"
 
 char cmd_resp_buf[64] = {0};
 
@@ -102,7 +103,7 @@ static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
 
 int main(void) {
     uint8_t x[2] = {0, 0};
-    NVMCTRL_REGS->NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(3); //needed so when we clock up we don't outrun flash
+    NVMCTRL_Initialize();
     PORT_Initialize();
     CLOCK_Initialize();
     SYSTICK_TimerInitialize();
@@ -130,6 +131,7 @@ int main(void) {
     //todo calibration of pulse len
     //todo improve CRC error rate?
     //todo configure brown-out detector
+    //todo read more than one byte at a time
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);

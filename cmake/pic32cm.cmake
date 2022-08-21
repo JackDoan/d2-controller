@@ -394,6 +394,7 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/stdio.c
     target/drivers/l9958.c
     target/drivers/plib_wdt.c
+    target/drivers/plib_nvmctrl.c
     target/device.c
 #
 #    drivers/adc_stm32f4xx.c
