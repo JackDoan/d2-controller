@@ -5,10 +5,43 @@
 
 #define FPORT_TX_PIN PORT_PIN_PA08
 
-const int sbus_max = 1750;
-const int sbus_mid = 992;
-const int sbus_min = 0;
-const int sbus_center_deadband = 3;
+struct sbus_params channel_defaults = {
+        .max = 1800,
+        .mid = 992,
+        .min = 173,
+        .deadband = 3,
+        .value_disabled = 8
+};
+
+struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct sbus_params* params) {
+    struct sign_magnitude out = {
+        .sign = false,
+        .magnitude = 0
+    };
+
+    if(sbus_val == params->value_disabled) {
+        return out;
+    }
+
+    struct sbus_params params_scaled = {
+            .max = params->max - params->min,
+            .mid = params->mid - params->min,
+            .min = 0,
+            .deadband = params->deadband
+    };
+
+    int val = (sbus_val - params->min) - params_scaled.mid;
+    out.sign = val > 0;
+    int abs_val = abs(val);
+    bool outside_deadband = abs_val > params_scaled.deadband;
+    if(outside_deadband) {
+        if(out.sign)
+            out.magnitude = (abs_val * period) / (params_scaled.max - params_scaled.mid);
+        else
+            out.magnitude = (abs_val * period) / (params_scaled.mid);
+    }
+    return out;
+}
 
 void motors_set_enable(bool enabled) {
     //const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
@@ -17,16 +50,15 @@ void motors_set_enable(bool enabled) {
     motor_enable(MOTOR2, enabled);
     motor_enable(MOTOR3, enabled);
     motor_enable(MOTOR4, enabled);
-
 }
 
 void failsafe_activate(void) {
     motors_set_enable(false);
     //set PWM to midpoint (off)
-    motor_set_speed(MOTOR1, sbus_mid);
-    motor_set_speed(MOTOR2, sbus_mid);
-    motor_set_speed(MOTOR3, sbus_mid);
-    motor_set_speed(MOTOR4, sbus_mid);
+    motor_set_speed(MOTOR1, channel_defaults.value_disabled);
+    motor_set_speed(MOTOR2, channel_defaults.value_disabled);
+    motor_set_speed(MOTOR3, channel_defaults.value_disabled);
+    motor_set_speed(MOTOR4, channel_defaults.value_disabled);
 }
 
 static PORT_PIN enable_pins[] = {EN1, EN2, EN3, EN4};
@@ -50,19 +82,9 @@ void do_brakes(int sbus_val) {
 }
 
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
-    int val = sbus_val-sbus_mid;
-    bool dir = val > 0;
-    uint32_t abs_val = abs(val);
-    bool outside_deadband = abs_val > sbus_center_deadband;
-    uint32_t duty_cycle;
-    if(outside_deadband) {
-        duty_cycle = (abs_val * TCC0_REGS->TCC_PER) / (sbus_max-sbus_mid);
-    }
-    else {
-        duty_cycle = 0;
-    }
-    *duty_cycles[channel] = duty_cycle;
-    PORT_PinWrite(dir_pins[channel], dir);
+    struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, TCC0_REGS->TCC_PER, &channel_defaults);
+    *duty_cycles[channel] = out.magnitude;
+    PORT_PinWrite(dir_pins[channel], out.sign);
 }
 
 #define PACKET_TIMEOUT_MAX_COUNT 500
@@ -74,7 +96,7 @@ void packet_timer_watchdog_feed(void) {
 void packet_timer_watchdog_tick(void) {
     if(packet_timeout_counter++ >= PACKET_TIMEOUT_MAX_COUNT) {
         failsafe_activate();
-        serial_puts("Packet timeout!");
+        serial_puts("Packet timeout!\r\n");
     }
 }
 

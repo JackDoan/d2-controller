@@ -166,6 +166,7 @@ void fport_proc_packet(uint8_t* pkt) {
         return;
     }
 
+    //todo better sanity checks, filters?
     if(frame->rssi > 100 || frame->rssi < 10) {
         rssi_invalid++;
         return;
@@ -181,9 +182,6 @@ void fport_proc_packet(uint8_t* pkt) {
         }
         return;
     }
-
-    //todo packet timeouts
-    //todo sanity checks, filters?
 
     if (frame->flags & SBUS_FLAG_CHANNEL_17) {
 
@@ -204,7 +202,20 @@ void fport_proc_packet(uint8_t* pkt) {
     motor_set_speed(MOTOR4, frame->chan3);
 
     if(fport_print) {
-        print_hex(fport_print_buf, pkt, fport_idx);
+        sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %04d %02x %d %02x\r\n",
+                sbus_to_duty_cycle(frame->chan0, TCC0_REGS->TCC_PER, &channel_defaults).magnitude,
+                frame->chan0,
+                frame->chan2,
+                frame->chan3,
+
+                frame->chan4,
+                frame->chan5,
+                frame->chan6,
+                frame->chan13,
+                frame->flags,
+                frame->rssi, frame->crc);
+        serial_puts(fport_print_buf);
+//        print_hex(fport_print_buf, pkt, fport_idx);
     }
 }
 
