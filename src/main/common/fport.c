@@ -9,6 +9,8 @@
 
 #define FPORT_START_OF_FRAME 0x7e
 #define FPORT_END_OF_FRAME 0x7e
+#define FPORT_STUFF_MARK 0x7d
+#define FPORT_XOR_VAL 0x20
 
 static uint8_t fport_dma_rx[1] = {0};
 static uint8_t fport_buf[30] = {0};
@@ -99,8 +101,8 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
 //    }
 
 
-    if(!send)
-        return;
+//    if(!send)
+//        return;
 //    data[9] = frskyCheckSum(data, 8);
     union fport_response data = {
             .len = 0x8,
@@ -151,7 +153,15 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
 
     data.crc = frskyCheckSum(data.bytes, 8);
     fport_enable_tx(true);
-    SERCOM_USART_Write(RX, data.bytes, sizeof(data));
+    for (unsigned int j = 0; j < sizeof(data); j++) {
+        uint8_t c = data.bytes[j];
+        if (c == FPORT_STUFF_MARK || c == FPORT_START_OF_FRAME) {
+            SERCOM_USART_WriteByte(RX, FPORT_STUFF_MARK);
+            SERCOM_USART_WriteByte(RX, c ^ FPORT_XOR_VAL);
+        } else {
+            SERCOM_USART_WriteByte(RX, c);
+        }
+    }
     fport_enable_tx(false);
 }
 static uint32_t rssi_invalid = 0;
@@ -260,10 +270,10 @@ void proc_fport_rx(void) {
             }
             break;
         case FPORT_STUFF_BYTE:
-            x ^= 0x20;
+            x ^= FPORT_XOR_VAL;
             goto proc_byte;
         case FPORT_FOUND: //todo is this all I need for byte-stuffing?
-            if(x == 0x7d) { //byte stuffing
+            if(x == FPORT_STUFF_MARK) { //byte stuffing
                 state = FPORT_STUFF_BYTE;
                 break;
             }
