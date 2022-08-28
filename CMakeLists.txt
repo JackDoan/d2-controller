@@ -26,9 +26,7 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 string(SUBSTRING ${GIT_SHA1} 0 8 GIT_REV)
 
-# Load settings related functions, so the tests can use them
 include(main)
-#include(settings)
 
 if(TOOLCHAIN STREQUAL none)
     add_subdirectory(src/test)
@@ -66,7 +64,6 @@ set(COMMON_COMPILE_DEFINITIONS
 include(openocd)
 include(svd)
 include(pic32cm)
-#include(stm32)
 
 add_subdirectory(src)
 

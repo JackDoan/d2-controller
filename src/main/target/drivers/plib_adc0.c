@@ -127,8 +127,8 @@ int ADC0_Convert_mV(void) {
 }
 
 __PACKED_STRUCT tsens_cal{
-    uint8_t tcal:6;
-    uint8_t fcal:6;
+    uint16_t tcal:6;
+    uint16_t fcal:6;
     uint32_t gain:24;
     uint32_t offset:24;
     uint8_t rsvd:4;
@@ -141,9 +141,6 @@ void TSENS_Init(void) {
     TSENS_REGS->TSENS_CTRLC |= TSENS_CTRLC_FREERUN_Msk;
 
     struct tsens_cal* cal = (struct tsens_cal*)TEMP_LOG_ADDR;
-//    uint32_t calib_low_word = (uint32_t)(*(uint32_t*)TEMP_LOG_ADDR);
-//    uint32_t calib_hi_word = (uint32_t)(*(uint32_t*)TEMP_LOG_ADDR+4);
-
 
     TSENS_REGS->TSENS_CAL = (cal->tcal << 8) | cal->fcal;
     TSENS_REGS->TSENS_GAIN = cal->gain;

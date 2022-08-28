@@ -12,7 +12,7 @@
 #define FPORT_STUFF_MARK 0x7d
 #define FPORT_XOR_VAL 0x20
 
-static uint8_t fport_dma_rx[1] = {0};
+static uint8_t fport_dma_rx[30] = {0};
 static uint8_t fport_buf[30] = {0};
 static uint8_t fport_idx = 0;
 
@@ -20,7 +20,10 @@ void fport_trigger(size_t len) {
     fport_gets(fport_dma_rx, len);
 }
 
+static uint32_t total_bytes = 0;
+
 uint8_t fport_dma_get_byte(void) {
+    total_bytes++;
     return fport_dma_rx[0];
 }
 
@@ -34,7 +37,6 @@ enum fport_state {
     FPORT_FOUND_SOF,
     FPORT_FOUND_1,
     FPORT_FOUND,
-    FPORT_STUFF_BYTE
 };
 
 static int crc_fail = 0; //todo make these measureable?
@@ -75,24 +77,28 @@ union __attribute__((packed)) fport_response {
     uint8_t bytes[10];
 };
 
+static void fport_tx(const uint8_t* buf) {
+    fport_enable_tx(true);
+    for (unsigned int j = 0; j < sizeof (union fport_response); j++) {
+        uint8_t c = buf[j];
+        if (c == FPORT_STUFF_MARK || c == FPORT_START_OF_FRAME) {
+            SERCOM_USART_WriteByte(RX, FPORT_STUFF_MARK);
+            SERCOM_USART_WriteByte(RX, c ^ FPORT_XOR_VAL);
+        } else {
+            SERCOM_USART_WriteByte(RX, c);
+        }
+    }
+    fport_enable_tx(false);
+}
+
 void fport_proc_telemetry_req(uint8_t* pkt) {
     //note: very timing sensitive. Don't remove the delay
-    static bool send = false;
     static uint8_t i = 0;
 
     if(!fport_check(pkt)) {
         return;
     }
-    send = !send;
-/*
- * why he jump
- * (236157) 1900e0031ff8c0c70af0810f7c08400002108000042000010062f7
-(236165) 1900c000000000c0800f000060f97e7e080110000000000000e67e
-1900e00280800700010e7c00000000000046147e7e080110000000
- (400350) 1900e60b5ff8ccc70af0810f7c08400002108000042000010059a6
-(400358) 1900c0008004e0000e7c00005a607e7e080110000000000000e67e
 
- */
 //    static char fport_print_buf[64] = {0};
 //    if(fport_print) {
 //        print_hex(fport_print_buf, pkt, fport_idx);
@@ -100,14 +106,10 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
         SYSTICK_DelayMs(1);
 //    }
 
-
-//    if(!send)
-//        return;
-//    data[9] = frskyCheckSum(data, 8);
     union fport_response data = {
-            .len = 0x8,
-            .uplink = 0x81,
-            .type = 0x10,
+        .len = 0x8,
+        .uplink = 0x81,
+        .type = 0x10,
     };
 
     i = (i+1) % 16;
@@ -152,23 +154,18 @@ void fport_proc_telemetry_req(uint8_t* pkt) {
     }
 
     data.crc = frskyCheckSum(data.bytes, 8);
-    fport_enable_tx(true);
-    for (unsigned int j = 0; j < sizeof(data); j++) {
-        uint8_t c = data.bytes[j];
-        if (c == FPORT_STUFF_MARK || c == FPORT_START_OF_FRAME) {
-            SERCOM_USART_WriteByte(RX, FPORT_STUFF_MARK);
-            SERCOM_USART_WriteByte(RX, c ^ FPORT_XOR_VAL);
-        } else {
-            SERCOM_USART_WriteByte(RX, c);
-        }
-    }
-    fport_enable_tx(false);
+    fport_tx(data.bytes);
 }
+
 static uint32_t rssi_invalid = 0;
+static uint32_t valid_packets = 0;
+static uint32_t total_packets = 0;
+static uint32_t discarded_bytes = 0;
+
 void fport_proc_packet(uint8_t* pkt) {
     static char fport_print_buf[64] = {0};
     struct fport_frame *frame = (struct fport_frame *)pkt;
-    //todo log dropped packets
+    total_packets++;
 
     uint8_t crc = frskyCheckSum(pkt, 28-2);
     if(crc != frame->crc) {
@@ -183,6 +180,7 @@ void fport_proc_packet(uint8_t* pkt) {
     }
 
     packet_timer_watchdog_feed();
+    valid_packets++;
 
     if(frame->flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
         failsafe_activate();
@@ -212,7 +210,7 @@ void fport_proc_packet(uint8_t* pkt) {
     motor_set_speed(MOTOR4, frame->chan3);
 
     if(fport_print) {
-        sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %04d %02x %d %02x\r\n",
+        sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %02x %d %02x %lu %lu %lu %lu\r\n",
                 sbus_to_duty_cycle(frame->chan0, TCC0_REGS->TCC_PER, &channel_defaults).magnitude,
                 frame->chan0,
                 frame->chan2,
@@ -221,9 +219,10 @@ void fport_proc_packet(uint8_t* pkt) {
                 frame->chan4,
                 frame->chan5,
                 frame->chan6,
-                frame->chan13,
                 frame->flags,
-                frame->rssi, frame->crc);
+                frame->rssi, frame->crc,
+                total_packets-valid_packets,
+                total_packets, discarded_bytes, total_bytes);
         serial_puts(fport_print_buf);
 //        print_hex(fport_print_buf, pkt, fport_idx);
     }
@@ -231,8 +230,19 @@ void fport_proc_packet(uint8_t* pkt) {
 
 static enum fport_state state = FPORT_SEEKING;
 void proc_fport_rx(void) {
+    static bool byte_stuffed = false;
     //todo log dropped bytes?
     uint8_t x = fport_dma_get_byte();
+    if(x == FPORT_STUFF_MARK) {
+        byte_stuffed = true;
+        fport_trigger(1);
+        return;
+    }
+    if(byte_stuffed) {
+        x ^= FPORT_XOR_VAL;
+        byte_stuffed = false;
+    }
+
     switch(state) {
         case FPORT_SEEKING:
             fport_idx = 0;
@@ -241,6 +251,8 @@ void proc_fport_rx(void) {
             }
             else {
                 //we don't want it
+                if(x)
+                    discarded_bytes++;
             }
             break;
         case FPORT_FOUND_SOF:
@@ -248,36 +260,32 @@ void proc_fport_rx(void) {
             if(x == FPORT_START_OF_FRAME) {
                 state = FPORT_FOUND_1;
             }
-//            else if(x == 0x19) { //hmm why does this work
-//                fport_buf[fport_idx++] = x;
-//                state = FPORT_FOUND;
-//            }
+            else if(x == 0x19) { //hmm why does this work
+                fport_buf[fport_idx++] = x;
+                state = FPORT_FOUND;
+            }
             else {
                 state = FPORT_SEEKING;
+//                if(x)
+                    discarded_bytes++;
             }
             break;
         case FPORT_FOUND_1:
-            if(x == 0x19) {
+            if(x == 0x19 || x == 0x08) {
                 fport_buf[fport_idx++] = x;
                 state = FPORT_FOUND;
             }
-            else if(x == 0x08) {
-                fport_buf[fport_idx++] = x;
-                state = FPORT_FOUND;
+            else if(x == FPORT_START_OF_FRAME) {
+                //do nothing
             }
             else {
                 fport_idx = 0; //we don't want it
+                state = FPORT_SEEKING;
+                if(x)
+                    discarded_bytes++;
             }
             break;
-        case FPORT_STUFF_BYTE:
-            x ^= FPORT_XOR_VAL;
-            goto proc_byte;
-        case FPORT_FOUND: //todo is this all I need for byte-stuffing?
-            if(x == FPORT_STUFF_MARK) { //byte stuffing
-                state = FPORT_STUFF_BYTE;
-                break;
-            }
-        proc_byte:
+        case FPORT_FOUND:
             fport_buf[fport_idx++] = x;
             if(fport_idx >= (fport_buf[0]+2)) {
                 switch(fport_buf[1]) { //todo if we're in pkt timeout, stop doing telemetry frames

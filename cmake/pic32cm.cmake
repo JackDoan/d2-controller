@@ -12,12 +12,6 @@ set(CMSIS_INCLUDE_DIR2 "${MAIN_SRC_DIR}/../vendor/PIC32CM6408MC00032/include")
 
 set(PIC32CM_STARTUP_DIR "${MAIN_SRC_DIR}/startup")
 
-# XXX: This code is not PIC32CM specific
-main_sources(PIC32CM_ASYNCFATFS_SRC
-        io/asyncfatfs/asyncfatfs.c
-        io/asyncfatfs/fat_standard.c
-        )
-
 set(PIC32CM_INCLUDE_DIRS
     "${MAIN_SRC_DIR}/../vendor/PIC32CM6408MC00032/include"
     "${MAIN_SRC_DIR}/../vendor/CMSIS/Core/Include"
@@ -143,18 +137,6 @@ function(get_stm32_flash_size out size)
     endif()
 endfunction()
 
-function(add_hex_target name exe hex)
-    add_custom_target(${name} ALL
-            cmake -E env PATH="$ENV{PATH}"
-            # TODO: Overriding the start address with --set-start 0x08000000
-            # seems to be required due to some incorrect assumptions about .hex
-            # files in the configurator. Verify wether that's the case and fix
-            # the bug in configurator or delete this comment.
-            ${CMAKE_OBJCOPY} -Oihex --set-start 0x08000000 $<TARGET_FILE:${exe}> ${hex}
-            BYPRODUCTS ${hex}
-            )
-endfunction()
-
 function(add_bin_target name exe bin)
     add_custom_target(${name}
             cmake -E env PATH="$ENV{PATH}"
@@ -212,8 +194,6 @@ function(add_stm32_executable)
     set_linker_script(${elf_target} ${args_LINKER_SCRIPT})
     if(args_FILENAME)
         set(basename ${CMAKE_BINARY_DIR}/${args_FILENAME})
-        set(hex_filename ${basename}.hex)
-        add_hex_target(${args_NAME} ${elf_target} ${hex_filename})
         set(bin_filename ${basename}.bin)
         add_bin_target(${args_NAME}.bin ${elf_target} ${bin_filename})
     endif()
@@ -236,21 +216,15 @@ function(target_mcu)
     cmake_parse_arguments(
             args
             # Boolean arguments
-            "DISABLE_MSC;BOOTLOADER"
+            "BOOTLOADER"
             # Single value arguments
-            "HSE_MHZ;LINKER_SCRIPT;NAME;OPENOCD_TARGET;OPTIMIZATION;STARTUP;SVD"
+            "LINKER_SCRIPT;NAME;OPENOCD_TARGET;OPTIMIZATION;STARTUP;SVD"
             # Multi-value arguments
-            "COMPILE_DEFINITIONS;COMPILE_OPTIONS;INCLUDE_DIRECTORIES;LINK_OPTIONS;SOURCES;MSC_SOURCES;MSC_INCLUDE_DIRECTORIES;VCP_SOURCES;VCP_INCLUDE_DIRECTORIES"
+            "COMPILE_DEFINITIONS;COMPILE_OPTIONS;INCLUDE_DIRECTORIES;LINK_OPTIONS;SOURCES"
             # Start parsing after the known arguments
             ${ARGN}
     )
     set(name ${args_NAME})
-
-    if (args_HSE_MHZ)
-        set(hse_mhz ${args_HSE_MHZ})
-    else()
-        set(hse_mhz ${PIC32CM_DEFAULT_HSE_MHZ})
-    endif()
 
     set(target_sources ${PIC32CM_STARTUP_DIR}/${args_STARTUP})
     list(APPEND target_sources ${args_SOURCES})
@@ -265,8 +239,6 @@ function(target_mcu)
     get_stm32_target_features(features "${CMAKE_CURRENT_SOURCE_DIR}" ${name})
     set_property(TARGET ${elf_target} PROPERTY FEATURES ${features})
 
-    math(EXPR hse_value "${hse_mhz} * 1000000")
-    list(APPEND target_definitions "HSE_VALUE=${hse_value}")
     if(args_COMPILE_DEFINITIONS)
         list(APPEND target_definitions ${args_COMPILE_DEFINITIONS})
     endif()
@@ -284,7 +256,7 @@ function(target_mcu)
     add_stm32_executable(
             NAME ${name}
             FILENAME ${binary_name}
-            SOURCES ${target_sources} ${msc_sources} ${COMMON_SRC}
+            SOURCES ${target_sources} ${COMMON_SRC}
             COMPILE_DEFINITIONS ${target_definitions}
             COMPILE_OPTIONS ${args_COMPILE_OPTIONS}
             INCLUDE_DIRECTORIES ${target_include_directories}
@@ -327,7 +299,7 @@ function(target_mcu)
         add_stm32_executable(
                 NAME ${name}${for_bl_suffix}
                 FILENAME ${binary_name}${for_bl_suffix}
-                SOURCES ${target_sources} ${msc_sources} ${COMMON_SRC}
+                SOURCES ${target_sources} ${COMMON_SRC}
                 COMPILE_DEFINITIONS ${target_definitions} MSP_FIRMWARE_UPDATE
                 COMPILE_OPTIONS ${args_COMPILE_OPTIONS}
                 INCLUDE_DIRECTORIES ${target_include_directories}
