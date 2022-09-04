@@ -3,8 +3,6 @@
 #include "plib_port.h"
 #include "sercom_usart.h"
 
-#define FPORT_TX_PIN PORT_PIN_PA08
-
 struct sbus_params channel_defaults = {
         .max = 1800,
         .mid = 992,

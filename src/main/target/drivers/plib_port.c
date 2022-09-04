@@ -26,22 +26,22 @@ void PORT_Initialize(void) {
     PORT_PinSet(CS3);
     PORT_PinSet(CS4);
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA07, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
+    PORT_PinPeripheralFunctionConfig(VBATT_SENSE, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
 
-//    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA08, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0 //todo switch these?
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA09, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1 --actually hooked up
+//    PORT_PinPeripheralFunctionConfig(RX_SERCOM_TX, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0
+    PORT_PinPeripheralFunctionConfig(RX_SERCOM_RX, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA16, PERIPHERAL_FUNCTION_C); //FTDI Sercom1 Pad 0
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA17, PERIPHERAL_FUNCTION_C); //FTDI Sercom1 Pad 1
+    PORT_PinPeripheralFunctionConfig(FTDI_SERCOM_RXI, PERIPHERAL_FUNCTION_C);
+    PORT_PinPeripheralFunctionConfig(FTDI_SERCOM_TXO, PERIPHERAL_FUNCTION_C);
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA10, PERIPHERAL_FUNCTION_F); //pwm1 TCC0/ WO[2] = CC1
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA11, PERIPHERAL_FUNCTION_F); //pwm2 TCC0/ WO[3] = CC0
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA15, PERIPHERAL_FUNCTION_F); //pwm3 TCC0/ WO[5] = CC2
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA14, PERIPHERAL_FUNCTION_F); //pwm4 TCC0/ WO[4] = CC3
+    PORT_PinPeripheralFunctionConfig(PIN_PWM1, PERIPHERAL_FUNCTION_F); //pwm1 TCC0/ WO[2] = CC1
+    PORT_PinPeripheralFunctionConfig(PIN_PWM2, PERIPHERAL_FUNCTION_F); //pwm2 TCC0/ WO[3] = CC0
+    PORT_PinPeripheralFunctionConfig(PIN_PWM3, PERIPHERAL_FUNCTION_F); //pwm3 TCC0/ WO[5] = CC2
+    PORT_PinPeripheralFunctionConfig(PIN_PWM4, PERIPHERAL_FUNCTION_F); //pwm4 TCC0/ WO[4] = CC3
 
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA22, PERIPHERAL_FUNCTION_C); //mosi Sercom3 pad0
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA23, PERIPHERAL_FUNCTION_C); //sck  Sercom3 pad1
-    PORT_PinPeripheralFunctionConfig(PORT_PIN_PA25, PERIPHERAL_FUNCTION_C); //miso Sercom3 pad3
+    PORT_PinPeripheralFunctionConfig(PIN_MOSI, PERIPHERAL_FUNCTION_C); //mosi Sercom3 pad0
+    PORT_PinPeripheralFunctionConfig(PIN_SCK, PERIPHERAL_FUNCTION_C); //sck  Sercom3 pad1
+    PORT_PinPeripheralFunctionConfig(PIN_MISO, PERIPHERAL_FUNCTION_C); //miso Sercom3 pad3
 }
 // *****************************************************************************
 /* Function:
