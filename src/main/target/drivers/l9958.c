@@ -127,3 +127,22 @@ void L9958_Tick(void) {
     //todo kick off reads on a regular interval (not as fast as possible though?)
     do_config_transaction(g_context.active);
 }
+
+bool L9958_has_problem(enum motor_channel channel) {
+    switch (g_context.rx_buf[channel].word) {
+        case 0x0000: // no problems, bridge off
+        case 0x0080: //no problems, bridge on
+            return false;
+        default:
+            return true;
+    }
+}
+
+uint32_t L9958_has_problems(void) {
+    uint32_t problem[4] = {0};
+    problem[0] = (1 & L9958_has_problem(MOTOR1));
+    problem[1] = (20 * L9958_has_problem(MOTOR2));
+    problem[2] = (300 * L9958_has_problem(MOTOR3));
+    problem[3] = (4000 * L9958_has_problem(MOTOR4));
+    return problem[0] + problem[1] + problem[2] + problem[3];
+}

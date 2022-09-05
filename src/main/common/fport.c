@@ -75,7 +75,9 @@ uint32_t fport_valid_frame_rate(void) {
 }
 
 uint32_t fport_valid_byte_rate(void) {
-    return (g_packet_stats.total_bytes-g_packet_stats.discarded_bytes) * 10000 / g_packet_stats.total_bytes;
+    uint32_t total_scaled = g_packet_stats.total_bytes >> 4U;
+    uint32_t disc_scaled = g_packet_stats.discarded_bytes >> 4U;
+    return (total_scaled-disc_scaled) * 1000 / total_scaled;
 }
 
 static void fport_trigger(size_t len) {
@@ -182,7 +184,7 @@ static void fport_proc_telemetry_req(uint8_t* pkt) {
         .type = 0x10,
     };
 
-    idx_to_send = (idx_to_send + 1) % 20;
+    idx_to_send = (idx_to_send + 1) % 22;
     if(idx_to_send & 1) {
         return;
     }
@@ -220,10 +222,14 @@ static void fport_proc_telemetry_req(uint8_t* pkt) {
             data.data = L9958_Diag_Read(MOTOR4);
             break;
         case 8:
+            data.id = 0x6915;
+            data.data = L9958_has_problems();
+            break;
+        case 9:
             data.id = 0x6920;
             data.data = fport_valid_frame_rate();
             break;
-        case 9:
+        case 10:
             data.id = 0x6921;
             data.data = fport_valid_byte_rate();
             break;
