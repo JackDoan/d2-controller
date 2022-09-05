@@ -1,6 +1,6 @@
 //
 // Created by jack on 8/8/22.
-//
+// Meanbean Version
 
 #ifndef INAV_DEVICE_H
 #define INAV_DEVICE_H
@@ -10,30 +10,30 @@
 
 #define DIR1 PORT_PIN_PA05
 #define DIR2 PORT_PIN_PA00
-#define DIR3 PORT_PIN_PA02
+#define DIR3 PORT_PIN_PA27
 #define DIR4 PORT_PIN_PA18
 
-#define CS1 PORT_PIN_PA04
+#define CS1 PORT_PIN_PA01 //todo
 #define CS2 PORT_PIN_PA01
-#define CS3 PORT_PIN_PA27
+#define CS3 PORT_PIN_PA24
 #define CS4 PORT_PIN_PA19
 
 #define EN1 PORT_PIN_PA06
 #define EN2 PORT_PIN_PA03
 #define EN3 PORT_PIN_PA28
-#define EN4 PORT_PIN_PA24
+#define EN4 PORT_PIN_PA11
 
 #define VBATT_SENSE PORT_PIN_PA07
 
-#define RX_SERCOM_TX PORT_PIN_PA08
+#define RX_SERCOM_TX PORT_PIN_PA04   // come back to these three, a couple diff ones may be it
 #define RX_SERCOM_RX PORT_PIN_PA09
-#define FPORT_TX_PIN PORT_PIN_PA08
+#define FPORT_TX_PIN PORT_PIN_PA04
 
 #define FTDI_SERCOM_RXI PORT_PIN_PA16
 #define FTDI_SERCOM_TXO PORT_PIN_PA17
 
-#define PIN_PWM1 PORT_PIN_PA10
-#define PIN_PWM2 PORT_PIN_PA11
+#define PIN_PWM1 PORT_PIN_PA15 //todo
+#define PIN_PWM2 PORT_PIN_PA14 //todo
 #define PIN_PWM3 PORT_PIN_PA15
 #define PIN_PWM4 PORT_PIN_PA14
 

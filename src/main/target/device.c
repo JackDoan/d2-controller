@@ -101,7 +101,7 @@ void packet_timer_watchdog_tick(void) {
 void fport_enable_tx(bool enable) {
     if(enable) {
         SERCOM_USART_ReceiverDisable(RX);
-        PORT_PinPeripheralFunctionConfig(FPORT_TX_PIN, PERIPHERAL_FUNCTION_C);
+        PORT_PinPeripheralFunctionConfig(FPORT_TX_PIN, PERIPHERAL_FUNCTION_D);
         SERCOM_USART_TransmitterEnable(RX);
     }
     else {

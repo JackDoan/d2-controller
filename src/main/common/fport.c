@@ -206,8 +206,8 @@ void fport_proc_packet(uint8_t* pkt) {
     do_brakes(frame->chan4);
     motor_set_speed(MOTOR1, frame->chan0);
     motor_set_speed(MOTOR2, frame->chan1);
-    motor_set_speed(MOTOR3, frame->chan2);
-    motor_set_speed(MOTOR4, frame->chan3);
+    motor_set_speed(MOTOR3, frame->chan0);
+    motor_set_speed(MOTOR4, frame->chan1);
 
     if(fport_print) {
         sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %02x %d %02x %lu %lu %lu %lu\r\n",
