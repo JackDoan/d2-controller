@@ -5,10 +5,34 @@
 #include "plib_systick.h"
 
 /* SERCOM USART baud value for 115200 Hz baud rate */
-#define SERCOM_USART_INT_BAUD_VALUE            (63019UL)
+#define SERCOM_115200_BAUD            (63019UL)
 
-static SERCOM_USART_OBJECT ftdiUSARTObj;
-static SERCOM_USART_OBJECT rxUSARTObj;
+#define SERCOM_CTRLA_SANE ( \
+    SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK | \
+    SERCOM_USART_INT_CTRLA_DORD_Msk |           \
+    SERCOM_USART_INT_CTRLA_IBON_Msk |           \
+    SERCOM_USART_INT_CTRLA_FORM(0x0UL) |        \
+    SERCOM_USART_INT_CTRLA_SAMPR(0UL)           \
+)
+
+static SERCOM_USART_OBJECT ftdiUSARTObj = {
+        .ctrla_defaults = SERCOM_CTRLA_SANE |
+                          SERCOM_USART_INT_CTRLA_RXPO(0x1UL) |  // pad 1 is RX
+                          SERCOM_USART_INT_CTRLA_TXPO(0x0UL),  // pad 0 is TX
+
+        .ctrlb_defaults = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
+                          SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
+                          SERCOM_USART_INT_CTRLB_RXEN_Msk |
+                          SERCOM_USART_INT_CTRLB_TXEN_Msk,
+};
+static SERCOM_USART_OBJECT rxUSARTObj = {
+        .ctrla_defaults = SERCOM_CTRLA_SANE |
+                          SERCOM_USART_INT_CTRLA_RXPO(0x1UL) |  // pad 1 is RX
+                          SERCOM_USART_INT_CTRLA_TXPO(0x0UL),  // pad 0 is TX
+        .ctrlb_defaults = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
+                          SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
+                          SERCOM_USART_INT_CTRLB_RXEN_Msk, //no txen by default!
+};
 
 static SERCOM_USART_OBJECT* get_object(sercom_registers_t* sercom) {
     switch ((uint32_t)sercom) {
@@ -53,36 +77,21 @@ static void SERCOM_Sync(sercom_registers_t* sercom) {
 }
 
 void SERCOM_USART_Initialize(sercom_registers_t* sercom) {
-    /*
-     * Configures USART Clock Mode
-     * Configures TXPO and RXPO
-     * Configures Data Order
-     * Configures Standby Mode
-     * Configures Sampling rate
-     * Configures IBON
-     */
-    sercom->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |
-            SERCOM_USART_INT_CTRLA_RXPO(0x1UL) |  // pad 1 is RX
-//            SERCOM_USART_INT_CTRLA_RXPO(0x0UL) |
-            SERCOM_USART_INT_CTRLA_TXPO(0x0UL) |  // pad 0 is TX
-            SERCOM_USART_INT_CTRLA_DORD_Msk |
-            SERCOM_USART_INT_CTRLA_IBON_Msk |
-            SERCOM_USART_INT_CTRLA_FORM(0x0UL) |
-            SERCOM_USART_INT_CTRLA_SAMPR(0UL);
-    
-    sercom->USART_INT.SERCOM_BAUD = (uint16_t)SERCOM_USART_INT_BAUD_BAUD(SERCOM_USART_INT_BAUD_VALUE);
-    
-    sercom->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
-            SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
-            SERCOM_USART_INT_CTRLB_RXEN_Msk |
-            SERCOM_USART_INT_CTRLB_TXEN_Msk;
+    SERCOM_USART_OBJECT* obj = get_object(sercom);
+
+    sercom->USART_INT.SERCOM_CTRLA = obj->ctrla_defaults;
+    SERCOM_Sync(sercom);
+
+    sercom->USART_INT.SERCOM_BAUD = (uint16_t)SERCOM_USART_INT_BAUD_BAUD(SERCOM_115200_BAUD);
+    SERCOM_Sync(sercom);
+
+    sercom->USART_INT.SERCOM_CTRLB = obj->ctrlb_defaults;
     SERCOM_Sync(sercom);
 
     /* Enable the UART after the configurations */
     sercom->USART_INT.SERCOM_CTRLA |= SERCOM_USART_INT_CTRLA_ENABLE_Msk;
     SERCOM_Sync(sercom);
 
-    SERCOM_USART_OBJECT* obj = get_object(sercom);
     obj->rxBuffer = NULL;
     obj->rxSize = 0;
     obj->rxProcessedSize = 0;
@@ -375,7 +384,6 @@ static void SERCOM_USART_InterruptHandler(sercom_registers_t* sercom) {
         if(testCondition) {
             SERCOM0_USART_ISR_RX_Handler(sercom);
         }
-        
 
     }
 }

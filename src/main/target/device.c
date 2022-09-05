@@ -101,12 +101,12 @@ void packet_timer_watchdog_tick(void) {
 void fport_enable_tx(bool enable) {
     if(enable) {
         SERCOM_USART_ReceiverDisable(RX);
-        PORT_PinPeripheralFunctionConfig(FPORT_TX_PIN, PERIPHERAL_FUNCTION_C);
+        PORT_PinPeripheralFunctionConfig(RX_SERCOM_TX, PERIPHERAL_FUNCTION_C);
         SERCOM_USART_TransmitterEnable(RX);
     }
     else {
         SERCOM_USART_TransmitterDisable(RX);
-        PORT_PinGPIOConfig(FPORT_TX_PIN);
+        PORT_PinGPIOConfig(RX_SERCOM_TX);
         SERCOM_USART_ReceiverEnable(RX);
     }
 }

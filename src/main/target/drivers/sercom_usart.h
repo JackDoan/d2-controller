@@ -62,8 +62,6 @@
 
 void SERCOM_USART_Initialize(sercom_registers_t* sercom);
 
-bool SERCOM0_USART_SerialSetup(USART_SERIAL_SETUP * serialSetup, uint32_t clkFrequency);
-
 void SERCOM_USART_TransmitterEnable(sercom_registers_t* sercom);
 void SERCOM_USART_TransmitterDisable(sercom_registers_t* sercom);
 

@@ -97,7 +97,6 @@ static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
         default:
             break;
     }
-
 }
 
 
@@ -109,8 +108,8 @@ int main(void) {
     SYSTICK_TimerInitialize();
     SYSTICK_TimerStart();
     DMAC_Initialize();
-    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_1, uartRxCallback, (uintptr_t) &ftdiRead);
-    DMAC_ChannelCallbackRegister(DMAC_CHANNEL_3, uartRxCallback, (uintptr_t) &rxRead);
+    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
+    fport_dma_register();
     NVIC_Initialize();
     Timer_Init(TC2_REGS);
     TCC0_PWMInitialize();
@@ -135,17 +134,13 @@ int main(void) {
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
-    fport_trigger(1);
     for(;;) {
         if(ftdiRead) {
             ftdiRead = false;
             cmd_prompt(x[0]);
             serial_gets(x, 1);
         }
-        if(rxRead) {
-            rxRead = false;
-            proc_fport_rx();
-        }
+        fport_tick();
         L9958_Tick(); //todo is it faster to not use interrupts?
         WDT_Clear();
     }

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include "plib_dmac.h"
 
 struct fport_frame {
     uint8_t length;
@@ -36,8 +37,9 @@ struct fport_frame {
 #define SBUS_FLAG_SIGNAL_LOSS       (1 << 2)
 #define SBUS_FLAG_FAILSAFE_ACTIVE   (1 << 3)
 
-void proc_fport_rx(void);
-void fport_trigger(size_t len);
+void fport_tick(void);
 void fport_enable_printing(bool enable);
+void fport_dma_register(void);
+uint32_t fport_valid_frame_rate(void);
 
 #endif //INAV_FPORT_H
