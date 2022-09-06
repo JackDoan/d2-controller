@@ -3,7 +3,6 @@
 #include "plib_clock.h"
 #include "sercom_usart.h"
 #include "plib_tcc0.h"
-#include "sercom_spi_master.h"
 #include "plib_nvic.h"
 #include "plib_dmac.h"
 #include "common/fport.h"
@@ -77,15 +76,19 @@ void cmd_prompt(char cmd) {
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "Reset Cause: %s\r\n", RSTC_ResetCauseGetStr());
             serial_puts(cmd_resp_buf);
             break;
+        case 'R':
+            serial_puts("reset test disabled\r\n");
+            //todo safeguard? NVIC_SystemReset();
+            break;
         case 'W':
-            serial_puts("watchdog test\r\n");
-            for(;;) {}
+            serial_puts("watchdog test disabled\r\n");
+            //todo safeguard? for(;;) {}
+            break;
         default:
             break;
     }
 }
 
-static bool rxRead = false;
 static bool ftdiRead = false;
 static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
     switch(event) {
@@ -98,7 +101,6 @@ static void uartRxCallback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
             break;
     }
 }
-
 
 int main(void) {
     uint8_t x[2] = {0, 0};
@@ -134,14 +136,16 @@ int main(void) {
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
-    for(;;) {
+    for(uint32_t i = 0; true; i++) {
+        fport_tick();
         if(ftdiRead) {
             ftdiRead = false;
             cmd_prompt(x[0]);
             serial_gets(x, 1);
         }
-        fport_tick();
-        L9958_Tick(); //todo is it faster to not use interrupts?
+        if(i & 1) {  // don't need to do this every cycle
+            L9958_Tick();
+        }
         WDT_Clear();
     }
 }
