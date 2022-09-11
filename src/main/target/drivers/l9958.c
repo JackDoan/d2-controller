@@ -1,8 +1,6 @@
 #include "l9958.h"
 #include "device.h"
 #include "sercom_spi_master.h"
-#include "common/utils.h"
-
 
 union l9958_config {
     struct {
@@ -56,35 +54,6 @@ union l9958_diag {
     uint16_t word;
 };
 
-union l9958_diag_small {
-    struct {
-        bool open_load: 1;
-        bool vbatt_uv: 1;
-        bool vdd_ov: 1;
-        bool current_limit_active: 1;
-
-        bool overtemp: 1;
-        bool bridge_active: 1;
-        bool overcurrent: 1;
-        bool output_short: 1;
-    };
-    uint8_t byte;
-};
-
-static union l9958_diag_small compress(union l9958_diag in) {
-    union l9958_diag_small out = {
-            .open_load = in.open_load_off | in.open_load_on,
-            .vbatt_uv = in.vbatt_uv,
-            .vdd_ov = in.vdd_ov,
-            .current_limit_active = in.current_limit_active,
-            .overtemp = in.temp_warn | in.temp_shutdown,
-            .bridge_active = in.bridge_active,
-            .overcurrent = in.oc_hs1 | in.os_hs2 | in.oc_ls1 | in.oc_ls2,
-            .output_short = in.short_to_batt_off | in.short_to_gnd_off
-    };
-    return out;
-}
-
 static union l9958_config config_data = {
         .diag_reset = 1,
         .cl1 = 1,
@@ -128,7 +97,7 @@ void L9958_Tick(void) {
     do_config_transaction(g_context.active);
 }
 
-bool L9958_has_problem(enum motor_channel channel) {
+static bool L9958_has_problem(enum motor_channel channel) {
     switch (g_context.rx_buf[channel].word) {
         case 0x0000: // no problems, bridge off
         case 0x0080: //no problems, bridge on

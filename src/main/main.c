@@ -5,7 +5,7 @@
 #include "plib_tcc0.h"
 #include "plib_nvic.h"
 #include "plib_dmac.h"
-#include "common/fport.h"
+#include "rx/fport.h"
 #include "timer.h"
 #include "plib_adc0.h"
 #include "plib_systick.h"

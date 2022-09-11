@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #define FTOA_BUFFER_SIZE 13
 
 void uli2a(unsigned long int num, unsigned int base, int uc, char *bf);
@@ -32,3 +34,15 @@ int fastA2I(const char *s);
 #ifndef HAVE_ITOA_FUNCTION
 char *itoa(int i, char *a, int r);
 #endif
+
+#define PACKED __attribute__((packed))
+
+union PACKED u32bytes {
+    struct {
+        uint8_t b0;
+        uint8_t b1;
+        uint8_t b2;
+        uint8_t b3;
+    };
+    uint32_t val;
+};
