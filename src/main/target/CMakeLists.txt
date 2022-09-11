@@ -1,1 +1,3 @@
-target_pic32cm_mc00(AAA_D2 SKIP_RELEASES)
+target_pic32cm_mc00(D2_rev2)
+target_pic32cm_mc00(D2_rev1)
+target_pic32cm_mc00(MEANBEAN_rev1)

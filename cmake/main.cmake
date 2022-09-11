@@ -75,11 +75,6 @@ function(setup_firmware_target exe name)
     set_property(GLOBAL PROPERTY VALID_TARGETS "${targets}")
     setup_openocd(${exe} ${name})
     setup_svd(${exe} ${name})
-
-#    cmake_parse_arguments(args "SKIP_RELEASES" "" "" ${ARGN})
-#    if(args_SKIP_RELEASES)
-#        set_target_properties(${exe} ${name} PROPERTIES SKIP_RELEASES ON)
-#    endif()
 endfunction()
 
 function(exclude_from_all target)

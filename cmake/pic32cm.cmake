@@ -100,11 +100,6 @@ function(add_arm_executable)
     set_linker_script(${elf_target} ${args_LINKER_SCRIPT})
     if(args_FILENAME)
         set(basename ${CMAKE_BINARY_DIR}/${args_FILENAME})
-        set(bin_filename ${basename}.bin)
-        add_bin_target(${args_NAME}.bin ${elf_target} ${bin_filename})
-    endif()
-    if(args_OUTPUT_BIN_FILENAME)
-        set(${args_OUTPUT_BIN_FILENAME} ${bin_filename} PARENT_SCOPE)
     endif()
     if(args_OUTPUT_TARGET_NAME)
         set(${args_OUTPUT_TARGET_NAME} ${elf_target} PARENT_SCOPE)
@@ -228,10 +223,10 @@ endfunction()
 
 function(target_pic32cm_mc00 name)
     target_mcu(
-            NAME D2
+            NAME ${name}
             SOURCES ${PIC32CM_STDPERIPH_SRC} ${PIC32CM_MC00_SRC}
             COMPILE_DEFINITIONS ${PIC32CM_MC00_DEFINITIONS} ${PIC32CM_MC0027_COMPILE_DEFINITIONS}
-            COMPILE_OPTIONS ${CORTEX_M0_COMMON_OPTIONS} ${CORTEX_M0_COMPILE_OPTIONS}
+            COMPILE_OPTIONS ${CORTEX_M0_COMMON_OPTIONS} ${CORTEX_M0_COMPILE_OPTIONS} -DBOARD_NAME_${name}
             INCLUDE_DIRECTORIES ${PIC32CM_MC00_INCLUDE_DIRS}
             LINK_OPTIONS ${CORTEX_M0_COMMON_OPTIONS} ${CORTEX_M0_LINK_OPTIONS}
             LINKER_SCRIPT pic32cm6408mc00032_flash
