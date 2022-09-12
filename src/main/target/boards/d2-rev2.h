@@ -1,6 +1,8 @@
 #ifndef D2_D2_REV2_H
 #define D2_D2_REV2_H
 
+#include "device.h"
+
 #define DIR1 PORT_PIN_PA05
 #define DIR2 PORT_PIN_PA00
 #define DIR3 PORT_PIN_PA02
@@ -25,11 +27,6 @@
 #define FTDI_SERCOM_RXI PORT_PIN_PA16
 #define FTDI_SERCOM_TXO PORT_PIN_PA17
 
-#define PIN_PWM1 PORT_PIN_PA10
-#define PIN_PWM2 PORT_PIN_PA11
-#define PIN_PWM3 PORT_PIN_PA15
-#define PIN_PWM4 PORT_PIN_PA14
-
 #define PIN_MOSI PORT_PIN_PA22
 #define PIN_MISO PORT_PIN_PA25
 #define PIN_SCK PORT_PIN_PA23
@@ -40,5 +37,48 @@
 
 #define FTDI_DMA_CHANNEL DMAC_CHANNEL_1
 #define FPORT_DMA_CHANNEL DMAC_CHANNEL_3
+
+/*
+ * pwm1 TCC0/ WO[2] = CC1
+ * pwm2 TCC0/ WO[3] = CC0
+ * pwm3 TCC0/ WO[5] = CC2
+ * pwm4 TCC0/ WO[4] = CC3
+ */
+
+#define MOTOR_1_CONFIG {\
+    .enable = EN1, \
+    .direction = DIR1, \
+    .output = PORT_PIN_PA10, \
+    .output_func = PERIPHERAL_FUNCTION_F, \
+    .pwm_bank = TCC0_REGS, \
+    .pwm_channel = TCC_CHANNEL2 \
+    }
+
+#define MOTOR_2_CONFIG {\
+    .enable = EN2, \
+    .direction = DIR2, \
+    .output = PORT_PIN_PA11, \
+    .output_func = PERIPHERAL_FUNCTION_F, \
+    .pwm_bank = TCC0_REGS, \
+    .pwm_channel = TCC_CHANNEL3 \
+    }
+
+#define MOTOR_3_CONFIG {\
+    .enable = EN3, \
+    .direction = DIR3, \
+    .output = PORT_PIN_PA15, \
+    .output_func = PERIPHERAL_FUNCTION_F, \
+    .pwm_bank = TCC0_REGS, \
+    .pwm_channel = TCC_CHANNEL1 \
+    }
+
+#define MOTOR_4_CONFIG {\
+    .enable = EN4, \
+    .direction = DIR4, \
+    .output = PORT_PIN_PA14, \
+    .output_func = PERIPHERAL_FUNCTION_F, \
+    .pwm_bank = TCC0_REGS, \
+    .pwm_channel = TCC_CHANNEL0 \
+    }
 
 #endif //D2_D2_REV2_H

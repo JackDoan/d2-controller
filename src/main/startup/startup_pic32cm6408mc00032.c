@@ -170,4 +170,6 @@ void Dummy_Handler(void)
     while (1) {}
 }
 
+void end(void) {}
+
 void _init(void) {;}

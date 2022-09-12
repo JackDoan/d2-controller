@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "device.h"
-#include "plib_port.h"
 #include "sercom_usart.h"
 
 struct sbus_params channel_defaults = {
@@ -9,6 +8,13 @@ struct sbus_params channel_defaults = {
         .min = 173,
         .deadband = 3,
         .value_disabled = 8
+};
+
+static struct motor_t g_motors[] = {
+        MOTOR_1_CONFIG,
+        MOTOR_2_CONFIG,
+        MOTOR_3_CONFIG,
+        MOTOR_4_CONFIG
 };
 
 struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct sbus_params* params) {
@@ -60,16 +66,11 @@ void failsafe_activate(void) {
 }
 
 static PORT_PIN enable_pins[] = {EN1, EN2, EN3, EN4};
-static PORT_PIN dir_pins[] = {DIR1, DIR2, DIR3, DIR4};
-static volatile uint32_t * duty_cycles[] = {
-        &TCC0_REGS->TCC_CC[2],
-        &TCC0_REGS->TCC_CC[3],
-        &TCC0_REGS->TCC_CC[1],
-        &TCC0_REGS->TCC_CC[0]
-};
 
 void motor_enable(enum motor_channel channel, bool enable) {
-    PORT_PinWrite(enable_pins[channel], enable);
+    struct motor_t* motor = &g_motors[channel];
+    if(motor->enable != PORT_PIN_NONE)
+        PORT_PinWrite(enable_pins[channel], enable);
 }
 
 void do_brakes(int sbus_val) {
@@ -80,9 +81,14 @@ void do_brakes(int sbus_val) {
 }
 
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
-    struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, TCC0_REGS->TCC_PER, &channel_defaults);
-    *duty_cycles[channel] = out.magnitude;
-    PORT_PinWrite(dir_pins[channel], out.sign);
+    struct sign_magnitude out;
+    struct motor_t* motor = &g_motors[channel];
+    if(motor->output == PORT_PIN_NONE)
+        return;
+    out = sbus_to_duty_cycle(sbus_val, motor->pwm_bank->TCC_PER, &channel_defaults);
+    TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
+    if(motor->direction != PORT_PIN_NONE)
+        PORT_PinWrite(motor->direction, out.sign);
 }
 
 #define PACKET_TIMEOUT_MAX_COUNT 500
@@ -111,5 +117,14 @@ void fport_enable_tx(bool enable) {
     }
 }
 
-void end(void) {
+void motors_init(void) {
+    for(int i = 0; i < MOTOR_COUNT; i++) {
+        PORT_PinOutputEnable(g_motors[i].enable);
+        PORT_PinClear(g_motors[i].enable);
+        PORT_PinOutputEnable(g_motors[i].direction);
+        PORT_PinClear(g_motors[i].direction);
+        PORT_PinPeripheralFunctionConfig(g_motors[i].output, g_motors[i].output_func);
+    }
+
+
 }

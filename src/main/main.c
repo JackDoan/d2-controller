@@ -114,7 +114,7 @@ int main(void) {
     fport_dma_register();
     NVIC_Initialize();
     Timer_Init(TC2_REGS);
-    TCC0_PWMInitialize();
+    TCC_PWMInitialize(TCC0_REGS);
 
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
     ADC0_Enable();

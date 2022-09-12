@@ -3,16 +3,8 @@
 
 #include <stdbool.h>
 #include "pic32cm6408mc00032.h"
-
-#ifdef BOARD_NAME_D2_rev2
-#include "boards/d2-rev2.h"
-#endif
-#ifdef BOARD_NAME_D2_rev1
-#include "boards/d2-rev1.h"
-#endif
-#ifdef BOARD_NAME_MEANBEAN_rev1
-#include "boards/meanbean-rev1.h"
-#endif
+#include "plib_port.h"
+#include "plib_tcc0.h"
 
 void motors_set_enable(bool enabled);
 
@@ -23,6 +15,25 @@ enum motor_channel {
     MOTOR4,
     MOTOR_COUNT
 };
+
+struct motor_t {
+    PORT_PIN enable;
+    PORT_PIN direction;
+    PORT_PIN output;
+    PERIPHERAL_FUNCTION output_func;
+    tcc_registers_t *pwm_bank;
+    enum tcc_channel pwm_channel;
+};
+
+#ifdef BOARD_NAME_D2_rev2
+#include "boards/d2-rev2.h"
+#endif
+#ifdef BOARD_NAME_D2_rev1
+#include "boards/d2-rev1.h"
+#endif
+#ifdef BOARD_NAME_MEANBEAN_rev1
+#include "boards/meanbean-rev1.h"
+#endif
 
 struct sbus_params {
     int max;
@@ -47,5 +58,6 @@ void packet_timer_watchdog_tick(void);
 void packet_timer_watchdog_feed(void);
 void fport_enable_tx(bool enable);
 struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct sbus_params* params);
+void motors_init(void);
 
 #endif //DEVICE_H
