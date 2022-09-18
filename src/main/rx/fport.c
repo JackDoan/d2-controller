@@ -295,7 +295,7 @@ void fport_proc_packet(uint8_t* pkt) {
 
     if(fport_print) {
         sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %02x %03d %02x %lu %lu %lu %lu\r\n",
-                sbus_to_duty_cycle(frame->chan0, TCC0_REGS->TCC_PER, &channel_defaults).magnitude,
+                sbus_to_duty_cycle(frame->chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
                 frame->chan0,
                 frame->chan1,
                 frame->chan2,

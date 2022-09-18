@@ -27,11 +27,11 @@ void cmd_prompt(char cmd) {
             break;
         case '2':
             motor_enable(MOTOR2, true);
-            motor_set_speed(MOTOR2, 1200);
+            motor_set_speed(MOTOR2, 1800);
             break;
         case '@':
             motor_enable(MOTOR2, false);
-            motor_set_speed(MOTOR2, 0);
+            motor_set_speed(MOTOR2, 173);
             break;
         case '3':
             motor_enable(MOTOR3, true);
@@ -115,6 +115,7 @@ int main(void) {
     NVIC_Initialize();
     Timer_Init(TC2_REGS);
     TCC_PWMInitialize(TCC0_REGS);
+    TCC_PWMInitialize(TCC1_REGS);
 
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
     ADC0_Enable();

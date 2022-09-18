@@ -51,7 +51,8 @@
     .output = PORT_PIN_PA10, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL2 \
+    .pwm_channel = TCC_CHANNEL2, \
+    .sbus_config = &drive_sbus_params \
     }
 
 #define MOTOR_2_CONFIG {\
@@ -60,7 +61,8 @@
     .output = PORT_PIN_PA11, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL3 \
+    .pwm_channel = TCC_CHANNEL3, \
+    .sbus_config = &drive_sbus_params \
     }
 
 #define MOTOR_3_CONFIG {\
@@ -69,7 +71,8 @@
     .output = PORT_PIN_PA15, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL1 \
+    .pwm_channel = TCC_CHANNEL1, \
+    .sbus_config = &drive_sbus_params \
     }
 
 #define MOTOR_4_CONFIG {\
@@ -78,7 +81,8 @@
     .output = PORT_PIN_PA14, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL0 \
+    .pwm_channel = TCC_CHANNEL0, \
+    .sbus_config = &drive_sbus_params \
     }
 
 #endif //D2_D2_REV2_H

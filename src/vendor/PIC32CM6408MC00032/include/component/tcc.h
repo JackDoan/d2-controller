@@ -509,6 +509,9 @@
 #define TCC_DRVCTRL_INVEN7_Pos                _UINT32_(23)                                         /* (TCC_DRVCTRL) Output Waveform 7 Inversion Position */
 #define TCC_DRVCTRL_INVEN7_Msk                (_UINT32_(0x1) << TCC_DRVCTRL_INVEN7_Pos)            /* (TCC_DRVCTRL) Output Waveform 7 Inversion Mask */
 #define TCC_DRVCTRL_INVEN7(value)             (TCC_DRVCTRL_INVEN7_Msk & (_UINT32_(value) << TCC_DRVCTRL_INVEN7_Pos)) /* Assigment of value for INVEN7 in the TCC_DRVCTRL register */
+
+#define TCC_DRVCTRL_INVEN_ALL_Msk              TCC_DRVCTRL_INVEN0_Msk | TCC_DRVCTRL_INVEN1_Msk | TCC_DRVCTRL_INVEN2_Msk | TCC_DRVCTRL_INVEN3_Msk | TCC_DRVCTRL_INVEN4_Msk | TCC_DRVCTRL_INVEN5_Msk | TCC_DRVCTRL_INVEN6_Msk | TCC_DRVCTRL_INVEN7_Msk
+
 #define TCC_DRVCTRL_FILTERVAL0_Pos            _UINT32_(24)                                         /* (TCC_DRVCTRL) Non-Recoverable Fault Input 0 Filter Value Position */
 #define TCC_DRVCTRL_FILTERVAL0_Msk            (_UINT32_(0xF) << TCC_DRVCTRL_FILTERVAL0_Pos)        /* (TCC_DRVCTRL) Non-Recoverable Fault Input 0 Filter Value Mask */
 #define TCC_DRVCTRL_FILTERVAL0(value)         (TCC_DRVCTRL_FILTERVAL0_Msk & (_UINT32_(value) << TCC_DRVCTRL_FILTERVAL0_Pos)) /* Assigment of value for FILTERVAL0 in the TCC_DRVCTRL register */

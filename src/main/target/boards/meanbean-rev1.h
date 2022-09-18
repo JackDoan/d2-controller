@@ -44,7 +44,8 @@
     .output = PORT_PIN_NONE, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL2 \
+    .pwm_channel = TCC_CHANNEL2, \
+    .sbus_config = &drive_sbus_params, \
     }
 
 //weapon
@@ -54,7 +55,9 @@
     .output = PORT_PIN_PA08, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
-    .pwm_channel = TCC_CHANNEL2 \
+    .pwm_channel = TCC_CHANNEL0, \
+    .sbus_config = &weapon_sbus_params,    \
+    .is_direct = true,                    \
     }
 
 //left
@@ -64,7 +67,8 @@
     .output = PORT_PIN_PA15, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL1 \
+    .pwm_channel = TCC_CHANNEL1, \
+    .sbus_config = &drive_sbus_params, \
     }
 
 //right
@@ -74,7 +78,8 @@
     .output = PORT_PIN_PA14, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
-    .pwm_channel = TCC_CHANNEL0 \
+    .pwm_channel = TCC_CHANNEL0, \
+    .sbus_config = &drive_sbus_params, \
     }
 
 #endif //D2_MEANBEAN_REV1_H

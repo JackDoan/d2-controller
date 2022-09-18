@@ -2,12 +2,20 @@
 #include "device.h"
 #include "sercom_usart.h"
 
-struct sbus_params channel_defaults = {
+struct sbus_params drive_sbus_params = {
         .max = 1800,
         .mid = 992,
         .min = 173,
         .deadband = 3,
-        .value_disabled = 8
+        .value_disabled = 8,
+};
+
+struct sbus_params weapon_sbus_params = {
+        .max = 1800,
+        .mid = 992,
+        .min = 173,
+        .deadband = 3,
+        .value_disabled = 8,
 };
 
 static struct motor_t g_motors[] = {
@@ -59,18 +67,13 @@ void motors_set_enable(bool enabled) {
 void failsafe_activate(void) {
     motors_set_enable(false);
     //set PWM to midpoint (off)
-    motor_set_speed(MOTOR1, channel_defaults.value_disabled);
-    motor_set_speed(MOTOR2, channel_defaults.value_disabled);
-    motor_set_speed(MOTOR3, channel_defaults.value_disabled);
-    motor_set_speed(MOTOR4, channel_defaults.value_disabled);
+    for(int i = 0; i < MOTOR_COUNT; i++) {
+        motor_set_speed(i, g_motors[i].sbus_config->value_disabled);
+    }
 }
 
-static PORT_PIN enable_pins[] = {EN1, EN2, EN3, EN4};
-
 void motor_enable(enum motor_channel channel, bool enable) {
-    struct motor_t* motor = &g_motors[channel];
-    if(motor->enable != PORT_PIN_NONE)
-        PORT_PinWrite(enable_pins[channel], enable);
+    PORT_PinWrite(g_motors[channel].enable, enable);
 }
 
 void do_brakes(int sbus_val) {
@@ -81,14 +84,16 @@ void do_brakes(int sbus_val) {
 }
 
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
-    struct sign_magnitude out;
     struct motor_t* motor = &g_motors[channel];
     if(motor->output == PORT_PIN_NONE)
         return;
-    out = sbus_to_duty_cycle(sbus_val, motor->pwm_bank->TCC_PER, &channel_defaults);
-    TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
-    if(motor->direction != PORT_PIN_NONE)
+    if(motor->is_direct) {
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 600));
+    } else {
+        struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor->pwm_bank->TCC_PER, motor->sbus_config);
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
         PORT_PinWrite(motor->direction, out.sign);
+    }
 }
 
 #define PACKET_TIMEOUT_MAX_COUNT 500
@@ -99,8 +104,8 @@ void packet_timer_watchdog_feed(void) {
 
 void packet_timer_watchdog_tick(void) {
     if(packet_timeout_counter++ >= PACKET_TIMEOUT_MAX_COUNT) {
-        failsafe_activate();
-        serial_puts("Packet timeout!\r\n");
+        //TODO remove failsafe_activate();
+        //serial_puts("Packet timeout!\r\n");
     }
 }
 
@@ -125,6 +130,4 @@ void motors_init(void) {
         PORT_PinClear(g_motors[i].direction);
         PORT_PinPeripheralFunctionConfig(g_motors[i].output, g_motors[i].output_func);
     }
-
-
 }
