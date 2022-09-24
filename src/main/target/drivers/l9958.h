@@ -1,7 +1,3 @@
-//
-// Created by jack on 8/13/22.
-//
-
 #ifndef D2_L9958_H
 #define D2_L9958_H
 

@@ -45,24 +45,21 @@ extern uint32_t _estack;
 extern void __attribute__((weak,long_call)) _on_reset(void);
 extern void __attribute__((weak,long_call)) _on_bootstrap(void);
 
-/** \cond DOXYGEN_SHOULD_SKIP_THIS */
 int main(void);
-/** \endcond */
 
 void __libc_init_array(void);
 
 /* Reset handler */
 void Reset_Handler(void);
 
-/* Default empty handler */
-void Dummy_Handler(void);
+void Dummy_Handler(void) {
+    while (1) {}
+}
 
 /* Cortex-M0PLUS core handlers */
 void NonMaskableInt_Handler ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void HardFault_Handler    ( void ) {
-    for(;;) {
-
-    }
+    while (1) {}
 }
 
 /* Exception Table */
@@ -122,8 +119,7 @@ const DeviceVectors exception_table = {
  * \brief This is the code that gets called on processor reset.
  * To initialize the device, and call the main() routine.
  */
-void Reset_Handler(void)
-{
+void Reset_Handler(void) {
     uint32_t *pSrc, *pDest;
 
     /* Initialize the relocate segment */
@@ -145,29 +141,11 @@ void Reset_Handler(void)
     pSrc = (uint32_t *) & _sfixed;
     SCB->VTOR = ((uint32_t) pSrc & SCB_VTOR_TBLOFF_Msk);
 
-    /* Call the optional application-provided _on_reset() function. */
-    if (_on_reset) {
-            _on_reset();
-    }
-
     /* Initialize the C library */
     __libc_init_array();
 
-    /* Call the optional application-provided _on_bootstrap() function. */
-    if (_on_bootstrap) {
-            _on_bootstrap();
-    }
-
-    /* Branch to main function */
     main();
-
-    /* Infinite loop */
     while (1);
-}
-
-void Dummy_Handler(void)
-{
-    while (1) {}
 }
 
 void end(void) {}
