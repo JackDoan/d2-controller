@@ -9,6 +9,15 @@ struct tcc_config {
     uint32_t TCC_WEXCTRL;
 };
 
+/*50Hz*/
+//cc0 is all channels
+#define RC_PPM {\
+.DRVCTRL = TCC_DRVCTRL_INVEN_ALL_Msk,\
+.TCC_PER = 1860*16,  \
+.TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV16,\
+.TCC_WEXCTRL = TCC_WEXCTRL_OTMX(2UL), \
+},\
+
 static struct tcc_config configs[] = {
         {
             .DRVCTRL = TCC_DRVCTRL_INVEN2_Msk |
@@ -20,11 +29,15 @@ static struct tcc_config configs[] = {
             .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(0UL),
         },
         {
-            .DRVCTRL = TCC_DRVCTRL_INVEN_ALL_Msk,
-            .TCC_PER = 1860*16, //50Hz
-            .TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV16,
-            .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(2UL), //cc0 is all channels
+            .DRVCTRL = TCC_DRVCTRL_INVEN2_Msk |
+                       TCC_DRVCTRL_INVEN3_Msk |
+                       TCC_DRVCTRL_INVEN4_Msk |
+                       TCC_DRVCTRL_INVEN5_Msk,
+            .TCC_PER = 1300,  //~19Khz
+            .TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV1,
+            .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(0UL),
         },
+
 };
 
 static inline struct tcc_config* get_config(tcc_registers_t* regs) {

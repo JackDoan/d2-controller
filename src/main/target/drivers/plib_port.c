@@ -15,14 +15,14 @@ void PORT_Initialize(void) {
     PORT_PinPeripheralFunctionConfig(VBATT_SENSE, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
 
 //    PORT_PinPeripheralFunctionConfig(RX_SERCOM_TX, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 0 -- configured dynamically
-    PORT_PinPeripheralFunctionConfig(RX_SERCOM_RX, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1
+//    PORT_PinPeripheralFunctionConfig(RX_SERCOM_RX, PERIPHERAL_FUNCTION_C); //RX Sercom0 Pad 1
 
     PORT_PinPeripheralFunctionConfig(FTDI_SERCOM_RXI, PERIPHERAL_FUNCTION_C);
     PORT_PinPeripheralFunctionConfig(FTDI_SERCOM_TXO, PERIPHERAL_FUNCTION_C);
 
-    PORT_PinPeripheralFunctionConfig(PIN_MOSI, PERIPHERAL_FUNCTION_C); //mosi Sercom3 pad0
-    PORT_PinPeripheralFunctionConfig(PIN_SCK, PERIPHERAL_FUNCTION_C); //sck  Sercom3 pad1
-    PORT_PinPeripheralFunctionConfig(PIN_MISO, PERIPHERAL_FUNCTION_C); //miso Sercom3 pad3
+//    PORT_PinPeripheralFunctionConfig(PIN_MOSI, PERIPHERAL_FUNCTION_C); //mosi Sercom3 pad0
+//    PORT_PinPeripheralFunctionConfig(PIN_SCK, PERIPHERAL_FUNCTION_C); //sck  Sercom3 pad1
+//    PORT_PinPeripheralFunctionConfig(PIN_MISO, PERIPHERAL_FUNCTION_C); //miso Sercom3 pad3
 }
 
 uint32_t PORT_GroupRead(PORT_GROUP group) {

@@ -35,7 +35,7 @@
 #define RX SERCOM0_REGS
 #define SPI SERCOM3_REGS
 
-#define FTDI_DMA_CHANNEL DMAC_CHANNEL_1
+#define FTDI_RX_DMA_CHANNEL DMAC_CHANNEL_1
 #define FPORT_DMA_CHANNEL DMAC_CHANNEL_3
 
 #define MOTOR_1_CONFIG {\
@@ -52,7 +52,7 @@
 #define MOTOR_2_CONFIG {\
     .enable = PORT_PIN_NONE, \
     .direction = PORT_PIN_NONE, \
-    .output = PORT_PIN_PA08, \
+    .output = PORT_PIN_NONE, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
     .pwm_channel = TCC_CHANNEL0, \

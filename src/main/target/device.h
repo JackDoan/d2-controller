@@ -38,6 +38,9 @@ struct motor_t {
 extern struct sbus_params drive_sbus_params;
 extern struct sbus_params weapon_sbus_params;
 
+#ifdef BOARD_NAME_MOTORTEST_rev1
+#include "boards/motortest-rev1.h"
+#endif
 #ifdef BOARD_NAME_D2_rev2
 #include "boards/d2-rev2.h"
 #endif

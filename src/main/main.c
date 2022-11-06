@@ -110,10 +110,10 @@ int main(void) {
     SYSTICK_TimerInitialize();
     SYSTICK_TimerStart();
     DMAC_Initialize();
-    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
-    fport_dma_register();
+    DMAC_ChannelCallbackRegister(FTDI_RX_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
+    //fport_dma_register();
     NVIC_Initialize();
-    Timer_Init(TC2_REGS);
+    //Timer_Init(TC2_REGS);
     TCC_PWMInitialize(TCC0_REGS);
     TCC_PWMInitialize(TCC1_REGS);
 
@@ -126,8 +126,8 @@ int main(void) {
     WDT_Enable();
 
     SERCOM_USART_Initialize(FTDI);
-    SERCOM_USART_Initialize(RX);
-    L9958_Init();
+    //SERCOM_USART_Initialize(RX);
+    //L9958_Init();
 
     //todo set PAC after configuring peripherals
     //todo calibration of pulse len
@@ -138,14 +138,15 @@ int main(void) {
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
     for(uint32_t i = 0; true; i++) {
-        fport_tick();
+        //fport_tick();
         if(ftdiRead) {
             ftdiRead = false;
             cmd_prompt(x[0]);
             serial_gets(x, 1);
         }
+//        SERCOM_USART_WriteByte(FTDI, 'U');
         if(i & 1) {  // don't need to do this every cycle
-            L9958_Tick();
+            //L9958_Tick();
         }
         WDT_Clear();
     }

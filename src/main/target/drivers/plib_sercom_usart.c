@@ -203,7 +203,7 @@ bool SERCOM_USART_Read_new(sercom_registers_t* sercom, void *buffer, const size_
     obj->errorStatus = USART_ERROR_NONE;
 
     /* Enable receive and error interrupt */
-    SERCOM0_REGS->USART_INT.SERCOM_INTENSET = (uint8_t) (SERCOM_USART_INT_INTENSET_ERROR_Msk |
+    sercom->USART_INT.SERCOM_INTENSET = (uint8_t) (SERCOM_USART_INT_INTENSET_ERROR_Msk |
                                                          SERCOM_USART_INT_INTENSET_RXC_Msk);
 
     return true;
@@ -227,7 +227,7 @@ bool SERCOM_USART_ReadAbort(sercom_registers_t* sercom)
     if (obj->rxBusyStatus == true)
     {
         /* Disable receive and error interrupt */
-        SERCOM0_REGS->USART_INT.SERCOM_INTENCLR = (uint8_t)(SERCOM_USART_INT_INTENCLR_ERROR_Msk | SERCOM_USART_INT_INTENCLR_RXC_Msk);
+        sercom->USART_INT.SERCOM_INTENCLR = (uint8_t)(SERCOM_USART_INT_INTENCLR_ERROR_Msk | SERCOM_USART_INT_INTENCLR_RXC_Msk);
 
         obj->rxBusyStatus = false;
 
@@ -324,7 +324,7 @@ void serial_puts(void *buffer) {
 }
 
 void serial_gets(void *buffer, size_t len) {
-    DMAC_ChannelTransfer(DMAC_CHANNEL_1, (const void *)&FTDI->USART_INT.SERCOM_DATA, buffer, len);
+    DMAC_ChannelTransfer(FTDI_RX_DMA_CHANNEL, (const void *)&FTDI->USART_INT.SERCOM_DATA, buffer, len);
 }
 
 void fport_gets(void *buffer, size_t len) {
