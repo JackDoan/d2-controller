@@ -126,6 +126,7 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/l9958.c
     target/drivers/plib_wdt.c
     target/drivers/plib_nvmctrl.c
+    target/drivers/plib_pdec.c
     target/device.c
 )
 

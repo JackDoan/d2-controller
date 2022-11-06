@@ -35,7 +35,7 @@ static struct tcc_config configs[] = {
                        TCC_DRVCTRL_INVEN5_Msk,
             .TCC_PER = 1300,  //~19Khz
             .TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV1,
-            .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(0UL),
+            .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(1UL),
         },
 
 };
@@ -125,5 +125,5 @@ uint32_t TCC_PWM24bitPeriodGet(tcc_registers_t* regs) {
 
 void TCC_PWM24bitCounterSet(tcc_registers_t* regs, uint32_t count) {
     regs->TCC_COUNT = count & 0xFFFFFFU;
-    TCC_Sync(TCC0_REGS, TCC_SYNCBUSY_COUNT_Msk);
+    TCC_Sync(regs, TCC_SYNCBUSY_COUNT_Msk);
 }

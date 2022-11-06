@@ -3,6 +3,9 @@
 void PORT_Initialize(void) {
     motors_init();
 
+    PORT_PinOutputEnable(M1_OUT);
+    PORT_PinOutputEnable(M2_OUT);
+
     PORT_PinOutputEnable(CS1);
     PORT_PinOutputEnable(CS2);
     PORT_PinOutputEnable(CS3);
@@ -11,6 +14,9 @@ void PORT_Initialize(void) {
     PORT_PinSet(CS2);
     PORT_PinSet(CS3);
     PORT_PinSet(CS4);
+
+    PORT_PinInputEnable(FAULT);
+    PORT_Pullup(FAULT);
 
     PORT_PinPeripheralFunctionConfig(VBATT_SENSE, PERIPHERAL_FUNCTION_C); //AIN[7] for vbatt
 
@@ -83,4 +89,12 @@ void PORT_PinGPIOConfig(PORT_PIN pin) {
 
     /* Disable peripheral control of the pin */
     ((port_group_registers_t*)group)->PORT_PINCFG[pin_num] &= ((uint8_t)(~PORT_PINCFG_PMUXEN_Msk));
+}
+
+void PORT_Pullup(PORT_PIN pin) {
+    PORT_GROUP group = GET_PORT_GROUP(pin);
+    uint32_t pin_num = ((uint32_t)pin) & 0x1FU;
+
+    /* Disable peripheral control of the pin */
+    ((port_group_registers_t*)group)->PORT_PINCFG[pin_num] |= ((uint8_t)(PORT_PINCFG_PULLEN(true)));
 }

@@ -12,26 +12,47 @@
 #include "l9958.h"
 #include "plib_wdt.h"
 #include "plib_nvmctrl.h"
+#include "plib_pdec.h"
 
 char cmd_resp_buf[64] = {0};
 
 void cmd_prompt(char cmd) {
     switch(cmd) {
+        case 'e':
+            PORT_PinWrite(EN1, true);
+            break;
+        case 'E':
+            PORT_PinWrite(EN1, false);
+            break;
+        case 'f':
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "FAULT: %04x\r\n", PORT_PinRead(FAULT));
+            serial_puts(cmd_resp_buf);
+            break;
+        case 'p':
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "PDEC: %08lx\r\n", PDEC_Counts());
+            serial_puts(cmd_resp_buf);
+            break;
         case '1':
-            motor_enable(MOTOR1, true);
-            motor_set_speed(MOTOR1, 1200);
+//            motor_enable(MOTOR1, true);
+//            motor_set_speed(MOTOR1, 1200);
+            PORT_PinWrite(EN1, true);
+            PORT_PinWrite(M1_OUT, false);
+            PORT_PinWrite(M2_OUT, true);
             break;
         case '!':
-            motor_enable(MOTOR1, false);
-            motor_set_speed(MOTOR1, 0);
+//            motor_enable(MOTOR1, false);
+//            motor_set_speed(MOTOR1, 0);
+            PORT_PinWrite(EN1, false);
+            PORT_PinWrite(M1_OUT, false);
+            PORT_PinWrite(M2_OUT, false);
             break;
         case '2':
             motor_enable(MOTOR2, true);
-            motor_set_speed(MOTOR2, 1800);
+            motor_set_speed(MOTOR2, 0);
             break;
         case '@':
             motor_enable(MOTOR2, false);
-            motor_set_speed(MOTOR2, 173);
+            motor_set_speed(MOTOR2, 0);
             break;
         case '3':
             motor_enable(MOTOR3, true);
@@ -57,12 +78,6 @@ void cmd_prompt(char cmd) {
                      L9958_Diag_Read(MOTOR1), L9958_Diag_Read(MOTOR2),
                      L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
             serial_puts(cmd_resp_buf);
-            break;
-        case 'p':
-            fport_enable_printing(true);
-            break;
-        case 'P':
-            fport_enable_printing(false);
             break;
         case 'a':
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\nTSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
@@ -116,6 +131,7 @@ int main(void) {
     //Timer_Init(TC2_REGS);
     TCC_PWMInitialize(TCC0_REGS);
     TCC_PWMInitialize(TCC1_REGS);
+    PDEC_Init();
 
     ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
     ADC0_Enable();

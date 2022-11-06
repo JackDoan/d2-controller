@@ -91,6 +91,7 @@ void PORT_GroupInputEnable(PORT_GROUP group, uint32_t mask);
 void PORT_GroupOutputEnable(PORT_GROUP group, uint32_t mask);
 void PORT_PinPeripheralFunctionConfig(PORT_PIN pin, PERIPHERAL_FUNCTION function);
 void PORT_PinGPIOConfig(PORT_PIN pin);
+void PORT_Pullup(PORT_PIN pin);
 
 static inline void PORT_PinWrite(PORT_PIN pin, bool value) {
     if(pin != PORT_PIN_NONE)

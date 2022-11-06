@@ -39,6 +39,12 @@
 #define FTDI_RX_DMA_CHANNEL DMAC_CHANNEL_1
 #define FPORT_DMA_CHANNEL DMAC_CHANNEL_3
 
+#define PDEC_A PORT_PIN_PA16
+#define PDEC_B PORT_PIN_PA17
+#define FAULT PORT_PIN_PA18
+#define M1_OUT PORT_PIN_PA24
+#define M2_OUT PORT_PIN_PA25
+
 /*
  * pwm1 TCC0/ WO[2] = CC1
  * pwm2 TCC0/ WO[3] = CC0
@@ -49,20 +55,21 @@
 #define MOTOR_1_CONFIG {\
     .enable = EN1, \
     .direction = DIR1, \
-    .output = PORT_PIN_PA24, \
+    .output = PORT_PIN_NONE, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
-    .pwm_channel = TCC_CHANNEL2, \
-    .sbus_config = &drive_sbus_params \
+    .pwm_channel = TCC_CHANNEL0,          \
+    .is_direct=false,                    \
+    .sbus_config = &drive_sbus_params     \
     }
 
 #define MOTOR_2_CONFIG {\
     .enable = EN1, \
     .direction = DIR2, \
-    .output = PORT_PIN_PA25, \
+    .output = PORT_PIN_NONE, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
-    .pwm_channel = TCC_CHANNEL3, \
+    .pwm_channel = TCC_CHANNEL1, \
     .sbus_config = &drive_sbus_params \
     }
 
