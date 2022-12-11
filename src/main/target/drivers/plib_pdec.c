@@ -1,7 +1,3 @@
-//
-// Created by jack on 11/6/22.
-//
-
 #include "plib_pdec.h"
 #include "pic32cm6408mc00032.h"
 #include "plib_port.h"
@@ -14,8 +10,22 @@
 #define PDEC_ENABLE (1 << 1)
 #define PDEC_SWRESET (1 << 0)
 
-static void sync(void) {
+enum pdec_cmd {
+    PDEC_CMD_NONE = 0,
+    PDEC_CMD_RETRIGGER = (1 << 5),
+    PDEC_CMD_UPDATE = (2 << 5),
+    PDEC_CMD_READSYNC = (3 << 5),
+    PDEC_CMD_START = (4 << 5),
+    PDEC_CMD_STOP = (5 << 5),
+};
+
+static inline void sync(void) {
     while((PDEC_REGS->PDEC_SYNCBUSY) != 0U) { }
+}
+
+static inline void cmd(enum pdec_cmd x) {
+    PDEC_REGS->PDEC_CTRLBSET |= x;
+    sync();
 }
 
 void PDEC_Init(void) {
@@ -24,8 +34,11 @@ void PDEC_Init(void) {
     PDEC_REGS->PDEC_CTRLA = PDEC_SWRESET;
     sync();
     PDEC_REGS->PDEC_CTRLA |= PDEC_ENABLE | PDEC_IO0_ENABLE | PDEC_IO1_ENABLE;
+    sync();
+    cmd(PDEC_CMD_START);
 }
 
 uint32_t PDEC_Counts(void) {
+    cmd(PDEC_CMD_READSYNC);
     return PDEC_REGS->PDEC_COUNT;
 }

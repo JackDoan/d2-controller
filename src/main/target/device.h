@@ -31,6 +31,7 @@ struct motor_t {
     PERIPHERAL_FUNCTION output_func;
     tcc_registers_t *pwm_bank;
     enum tcc_channel pwm_channel;
+    enum tcc_channel pwm_channel2;
     struct sbus_params* sbus_config;
     bool is_direct;
 };

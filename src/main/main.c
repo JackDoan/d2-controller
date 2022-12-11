@@ -33,54 +33,17 @@ void cmd_prompt(char cmd) {
             serial_puts(cmd_resp_buf);
             break;
         case '1':
-//            motor_enable(MOTOR1, true);
-//            motor_set_speed(MOTOR1, 1200);
-            PORT_PinWrite(EN1, true);
-            PORT_PinWrite(M1_OUT, false);
-            PORT_PinWrite(M2_OUT, true);
+            motor_set_speed(MOTOR1, 400);
             break;
         case '!':
-//            motor_enable(MOTOR1, false);
-//            motor_set_speed(MOTOR1, 0);
-            PORT_PinWrite(EN1, false);
-            PORT_PinWrite(M1_OUT, false);
-            PORT_PinWrite(M2_OUT, false);
+            motor_set_speed(MOTOR1, 0);
             break;
         case '2':
-            motor_enable(MOTOR2, true);
-            motor_set_speed(MOTOR2, 0);
-            break;
-        case '@':
-            motor_enable(MOTOR2, false);
-            motor_set_speed(MOTOR2, 0);
-            break;
-        case '3':
-            motor_enable(MOTOR3, true);
-            motor_set_speed(MOTOR3, 1200);
-            break;
-        case '#':
-            motor_enable(MOTOR3, false);
-            motor_set_speed(MOTOR3, 0);
-            break;
-        case '4':
-            motor_enable(MOTOR4, true);
-            motor_set_speed(MOTOR4, 1200);
-            break;
-        case '$':
-            motor_enable(MOTOR4, false);
-            motor_set_speed(MOTOR4, 0);
-            break;
-        case 'd':
-            PORT_PinToggle(DIR3);
-            break;
-        case 's':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "1: %04x\r\n2: %04x\r\n3: %04x\r\n4: %04x\r\n",
-                     L9958_Diag_Read(MOTOR1), L9958_Diag_Read(MOTOR2),
-                     L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
-            serial_puts(cmd_resp_buf);
+            motor_set_speed(MOTOR1, 1200);
             break;
         case 'a':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\nTSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\nTSens: %lu\r\nMotor Current: %d\r\n",
+                     ADC0_Get(0), TSENS_Get(), ADC0_Get(1));
             serial_puts(cmd_resp_buf);
             break;
         case 't':
@@ -164,6 +127,7 @@ int main(void) {
         if(i & 1) {  // don't need to do this every cycle
             //L9958_Tick();
         }
+        ADC0_Tick();
         WDT_Clear();
     }
 }

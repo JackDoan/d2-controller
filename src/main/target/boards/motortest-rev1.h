@@ -55,18 +55,19 @@
 #define MOTOR_1_CONFIG {\
     .enable = EN1, \
     .direction = DIR1, \
-    .output = PORT_PIN_NONE, \
+    .output = M1_OUT, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
     .pwm_channel = TCC_CHANNEL0,          \
-    .is_direct=false,                    \
-    .sbus_config = &drive_sbus_params     \
+    .pwm_channel2 = TCC_CHANNEL1,          \
+    .sbus_config = &drive_sbus_params,     \
+    .is_direct = true                    \
     }
 
 #define MOTOR_2_CONFIG {\
     .enable = EN1, \
     .direction = DIR2, \
-    .output = PORT_PIN_NONE, \
+    .output = M2_OUT, \
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
     .pwm_channel = TCC_CHANNEL1, \

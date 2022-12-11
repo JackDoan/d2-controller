@@ -88,7 +88,8 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     if(motor->output == PORT_PIN_NONE)
         return;
     if(motor->is_direct) {
-        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 800));
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val));
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel2, (sbus_val));
     } else {
         struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor->pwm_bank->TCC_PER, motor->sbus_config);
         TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);

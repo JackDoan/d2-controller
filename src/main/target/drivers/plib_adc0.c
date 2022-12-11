@@ -9,6 +9,16 @@
 
 #define ADC_SCALE 6.06f
 
+static const ADC_POSINPUT adc_inputs[] = {
+        ADC_POSINPUT_AIN7, ADC_POSINPUT_AIN0
+};
+
+#define NUM_INPUTS sizeof(adc_inputs)/sizeof(ADC_POSINPUT)
+
+static int adc_results[NUM_INPUTS] = {};
+
+static unsigned int adc_idx = 0;
+
 void ADC0_Initialize(void) {
     /* Reset ADC */
     ADC0_REGS->ADC_CTRLA = (uint8_t)ADC_CTRLA_SWRST_Msk;
@@ -30,7 +40,7 @@ void ADC0_Initialize(void) {
     ADC0_REGS->ADC_REFCTRL = (uint8_t)ADC_REFCTRL_REFSEL_INTVCC2 | ADC_REFCTRL_REFCOMP_Msk;
 
     /* Input pin */
-    ADC0_REGS->ADC_INPUTCTRL = (uint16_t) ADC_POSINPUT_AIN7;
+    ADC0_REGS->ADC_INPUTCTRL = (uint16_t) adc_inputs[0];
 
     /* Resolution & Operation Mode */
     ADC0_REGS->ADC_CTRLC = (uint16_t)(ADC_CTRLC_RESSEL_12BIT | ADC_CTRLC_WINMODE(0UL) );
@@ -62,8 +72,10 @@ void ADC0_ChannelSelect( ADC_POSINPUT positiveInput, ADC_NEGINPUT negativeInput 
 
 /* Start the ADC conversion by SW */
 void ADC0_ConversionStart(void) {
+    adc_idx = (adc_idx+1) % NUM_INPUTS;
+    ADC0_ChannelSelect(adc_inputs[adc_idx], ADC_NEGINPUT_GND);
     ADC0_REGS->ADC_SWTRIG |= (uint8_t)ADC_SWTRIG_START_Msk;
-    //while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk) {}
+    while((ADC0_REGS->ADC_SYNCBUSY & ADC_SYNCBUSY_SWTRIG_Msk) == ADC_SYNCBUSY_SWTRIG_Msk) {}
 }
 
 /* Check whether auto sequence conversion is done */
@@ -72,25 +84,15 @@ bool ADC0_ConversionSequenceIsFinished(void) {
 }
 
 /* Configure window comparison threshold values */
-void ADC0_ComparisonWindowSet(uint16_t low_threshold, uint16_t high_threshold)
-{
+void ADC0_ComparisonWindowSet(uint16_t low_threshold, uint16_t high_threshold) {
     ADC0_REGS->ADC_WINLT = low_threshold;
     ADC0_REGS->ADC_WINUT = high_threshold;
-    while(0U != (ADC0_REGS->ADC_SYNCBUSY))
-    {
-        /* Wait for Synchronization */
-    }
-}
-
-void ADC0_WindowModeSet(ADC_WINMODE mode)
-{
-	ADC0_REGS->ADC_CTRLC =  (ADC0_REGS->ADC_CTRLC & (uint16_t)(~ADC_CTRLC_WINMODE_Msk)) | (uint16_t)((uint32_t)mode << ADC_CTRLC_WINMODE_Pos);
     while(0U != (ADC0_REGS->ADC_SYNCBUSY)) { }
 }
 
-/* Read the conversion result */
-uint16_t ADC0_ConversionResultGet(void) {
-    return (uint16_t)ADC0_REGS->ADC_RESULT;
+void ADC0_WindowModeSet(ADC_WINMODE mode) {
+	ADC0_REGS->ADC_CTRLC =  (ADC0_REGS->ADC_CTRLC & (uint16_t)(~ADC_CTRLC_WINMODE_Msk)) | (uint16_t)((uint32_t)mode << ADC_CTRLC_WINMODE_Pos);
+    while(0U != (ADC0_REGS->ADC_SYNCBUSY)) { }
 }
 
 void ADC0_InterruptsClear(ADC_STATUS interruptMask) {
@@ -114,16 +116,18 @@ bool ADC0_ConversionStatusGet(void) {
     return status;
 }
 
-int ADC0_Convert_mV(void) {
-    static int voltage_measured = 0;
+void ADC0_Tick(void) {
+    unsigned int current_idx = adc_idx;
     if(ADC0_ConversionStatusGet()) {
+        uint16_t adc_count = ADC0_REGS->ADC_RESULT;
         ADC0_ConversionStart();
-        uint16_t adc_count = ADC0_ConversionResultGet();
         float input_voltage = (float)adc_count * ADC_SCALE * ADC_VREF / (41) /*was 4096, but I want millivolts */;
-        voltage_measured = (int)input_voltage;
+        adc_results[current_idx] = ((int)input_voltage+ adc_results[current_idx])/2;
     }
+}
 
-    return voltage_measured;
+int ADC0_Get(int idx) {
+    return adc_results[idx];
 }
 
 __PACKED_STRUCT tsens_cal{
