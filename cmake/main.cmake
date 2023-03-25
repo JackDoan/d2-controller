@@ -1,11 +1,9 @@
 set(MAIN_INCLUDE_DIRS
         "${MAIN_LIB_DIR}"
         "${MAIN_SRC_DIR}"
-        "${MAIN_LIB_DIR}/main/MAVLink"
         )
 
 set(MAIN_DEFINITIONS
-        __FORKNAME__=inav
         __REVISION__="${GIT_REV}"
         )
 
@@ -53,10 +51,7 @@ function(setup_executable exe name)
     target_compile_options(${exe} PRIVATE ${MAIN_COMPILE_OPTIONS})
     target_include_directories(${exe} PRIVATE ${generated_dir} ${MAIN_INCLUDE_DIRS})
     target_compile_definitions(${exe} PRIVATE ${MAIN_DEFINITIONS} __TARGET__="${name}" ${name})
-    # XXX: Don't make SETTINGS_GENERATED_C part of the build,
-    # since it's compiled via #include in settings.c. This will
-    # change once we move off PGs
-    target_sources(${exe} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/${name}/${SETTINGS_GENERATED_H}")
+
     set_target_properties(${exe} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
             )

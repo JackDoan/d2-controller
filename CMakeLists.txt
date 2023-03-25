@@ -9,16 +9,7 @@ set(MAIN_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/main")
 set(SVD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dev/svd")
 set(DOWNLOADS_DIR "${MAIN_DIR}/downloads")
 set(TOOLS_DIR "${MAIN_DIR}/tools")
-
-set(TOOLCHAIN_OPTIONS none arm-none-eabi)
-set(TOOLCHAIN "arm-none-eabi" CACHE STRING "Toolchain to use. Available: ${TOOLCHAIN_OPTIONS}")
-set_property(CACHE TOOLCHAIN PROPERTY STRINGS ${TOOLCHAIN_OPTIONS})
-if("" STREQUAL TOOLCHAIN)
-    set(TOOLCHAIN none)
-endif()
-if (NOT ${TOOLCHAIN} IN_LIST TOOLCHAIN_OPTIONS)
-    message(FATAL_ERROR "Invalid toolchain ${TOOLCHAIN}. Valid options are: ${TOOLCHAIN_OPTIONS}")
-endif()
+set(TOOLCHAIN "arm-none-eabi")
 
 option(COMPILER_VERSION_CHECK "Ensure the compiler matches the expected version" ON)
 
