@@ -165,45 +165,43 @@ static bool fport_check_control_packet(struct fport_frame *frame) {
 }
 
 void fport_proc_packet(union fport_pkt* pkt) {
-//    static char fport_print_buf[64] = {0};
-    struct fport_frame frame = pkt->ctrl;
-    if(!fport_check_control_packet(&frame)) {
+    if(!fport_check_control_packet(&pkt->ctrl)) {
         return;
     }
 
-    if(is_failsafe_pkt(frame.flags)) {
+    if(is_failsafe_pkt(pkt->ctrl.flags)) {
         failsafe_activate();
         g_packet_stats.num_failsafes++;
         return;
     }
 
-    if (frame.flags & SBUS_FLAG_CHANNEL_17) {
+    if (pkt->ctrl.flags & SBUS_FLAG_CHANNEL_17) {
 
     }
 
-    if (frame.flags & SBUS_FLAG_CHANNEL_18) {
+    if (pkt->ctrl.flags & SBUS_FLAG_CHANNEL_18) {
 
     }
 
-    do_brakes(frame.chan4);
-    motor_set_speed(MOTOR1, frame.chan0);
-    motor_set_speed(MOTOR2, frame.chan1);
-    motor_set_speed(MOTOR3, frame.chan2);
-    motor_set_speed(MOTOR4, frame.chan3);
+    do_brakes(pkt->ctrl.chan4);
+    motor_set_speed(MOTOR1, pkt->ctrl.chan0);
+    motor_set_speed(MOTOR2, pkt->ctrl.chan1);
+    motor_set_speed(MOTOR3, pkt->ctrl.chan2);
+    motor_set_speed(MOTOR4, pkt->ctrl.chan3);
 
     if(fport_print) {
 //        sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %02x %03d %02x %lu %lu %lu %lu\r\n",
-//                sbus_to_duty_cycle(frame.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
-//                frame.chan0,
-//                frame.chan1,
-//                frame.chan2,
-//                frame.chan3,
+//                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
+//                pkt->ctrl.chan0,
+//                pkt->ctrl.chan1,
+//                pkt->ctrl.chan2,
+//                pkt->ctrl.chan3,
 //
-//                frame.chan4,
-//                frame.chan5,
+//                pkt->ctrl.chan4,
+//                pkt->ctrl.chan5,
 //
-//                frame.flags,
-//                frame.rssi, frame.crc,
+//                pkt->ctrl.flags,
+//                pkt->ctrl.rssi, pkt->ctrl.crc,
 //                g_packet_stats.total_packets-g_packet_stats.valid_packets,
 //                g_packet_stats.total_packets, g_packet_stats.discarded_bytes, g_packet_stats.total_bytes);
 //        serial_puts(fport_print_buf);
@@ -211,20 +209,63 @@ void fport_proc_packet(union fport_pkt* pkt) {
     }
 }
 
-static enum fport_state state = FPORT_SEEKING;
+struct fport_dma_context {
+    bool byte_stuffed;
+    uint8_t dma_rx[30];
+};
+
+static struct fport_dma_context g_context = {0};
+
+void fport_trigger(size_t len) {
+    fport_gets(g_context.dma_rx, len);
+}
+
+void fport_dma_register(void) {
+    DMAC_ChannelCallbackRegister(FPORT_DMA_CHANNEL, fport_dma_callback, (uintptr_t) &g_context);
+    fport_trigger(1);
+}
+
+uint8_t fport_dma_get_byte(void) {
+    return g_context.dma_rx[0];
+}
+
+static enum fport_state state = FPORT_SOF;
+
+void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+    struct fport_dma_context *context = (struct fport_dma_context*)contextHandle;
+    g_packet_stats.total_bytes++;
+    switch(event) {
+        case DMAC_TRANSFER_EVENT_COMPLETE: {
+            if(context->dma_rx[0] == FPORT_START_OF_FRAME) {
+                state = FPORT_SOF;
+                if (fport_idx)
+                    g_packet_stats.discarded_bytes+= fport_idx;
+                fport_idx = 0;
+                fport_trigger(1);
+                return;
+            }
+            if(context->byte_stuffed) {
+                context->dma_rx[0] ^= FPORT_XOR_VAL;
+                context->byte_stuffed = false;
+            } else if(context->dma_rx[0] == FPORT_STUFF_MARK) {
+                context->byte_stuffed = true;
+                fport_trigger(1);
+                return;
+            }
+            fport_tick();
+            break;
+        }
+        case DMAC_TRANSFER_EVENT_NONE:
+        case DMAC_TRANSFER_EVENT_ERROR:
+        default:
+            break;
+    }
+}
+
+
 void fport_tick(void) {
     uint8_t x = fport_dma_get_byte();
-    g_packet_stats.total_bytes++;
     switch(state) {
-        case FPORT_SEEKING:
-            fport_idx = 0;
-            if(x == FPORT_START_OF_FRAME) {
-                state = FPORT_SOF;
-            }
-            else {
-                g_packet_stats.discarded_bytes++;
-            }
-            break;
         case FPORT_SOF:
             if(x == 0x19 || x == 0x08) {
                 fport_buf.bytes[fport_idx++] = x;
@@ -235,13 +276,16 @@ void fport_tick(void) {
             }
             else {
                 fport_idx = 0; //we don't want it
-                state = FPORT_SEEKING;
                 g_packet_stats.discarded_bytes++;
             }
             break;
         case FPORT_FOUND:
             fport_buf.bytes[fport_idx++] = x;
             if(fport_idx >= (fport_buf.ctrl.length + 2)) {
+                if(fport_print) {
+                    char fport_print_buf[64] = {0};
+                    print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
+                }
                 switch(fport_buf.ctrl.kind) { //todo if we're in pkt timeout, stop doing telemetry frames
                     case 0:
                         fport_proc_packet(&fport_buf);
@@ -255,7 +299,7 @@ void fport_tick(void) {
                 }
                 fport_idx = 0;
                 memset(fport_buf.bytes, 0, 30);
-                state = FPORT_SEEKING;
+                state = FPORT_SOF;
             }
             break;
         default:

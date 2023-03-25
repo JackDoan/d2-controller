@@ -85,7 +85,7 @@ void cmd_prompt(char cmd) {
             //todo safeguard? for(;;) {}
             break;
         default:
-            debug_puts("?\n");
+            debug_puts("?\r\n");
             break;
     }
 }
@@ -138,17 +138,15 @@ int main(void) {
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
-    for(uint32_t i = 0; true; i++) {
-//        fport_tick();
+    for(;;) {
         if(ftdiRead) {
             ftdiRead = false;
             cmd_prompt(x[0]);
             serial_gets(x, 1);
         }
-        if(i & 1) {  // don't need to do this every cycle
-            L9958_Tick();
-        }
+        L9958_Tick();
         WDT_Clear();
+        __WFI();
     }
 }
 

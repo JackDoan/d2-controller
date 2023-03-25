@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "plib_dmac.h"
-#include "fport_dma.h"
-#include "fport_stats.h"
 
 #define FPORT_START_OF_FRAME 0x7e
 #define FPORT_END_OF_FRAME 0x7e
@@ -55,6 +53,18 @@ union fport_pkt {
     uint8_t bytes[30];
 };
 
+struct packet_stats {
+    uint32_t valid_packets;
+    uint32_t total_packets;
+    uint32_t discarded_bytes;
+    uint32_t total_bytes;
+    uint32_t num_failsafes;
+
+    uint32_t crc_fail;
+    uint32_t eof_fail;
+    uint32_t rssi_invalid;
+};
+
 #define SBUS_FLAG_CHANNEL_17        (1 << 0)
 #define SBUS_FLAG_CHANNEL_18        (1 << 1)
 #define SBUS_FLAG_SIGNAL_LOSS       (1 << 2)
@@ -63,5 +73,10 @@ union fport_pkt {
 void fport_tick(void);
 void fport_enable_printing(bool enable);
 uint32_t fport_valid_frame_rate(void);
+
+void fport_dma_register(void);
+uint8_t fport_dma_get_byte(void);
+void fport_trigger(size_t len);
+void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle);
 
 #endif //INAV_FPORT_H
