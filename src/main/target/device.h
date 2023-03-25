@@ -7,6 +7,7 @@
 #include "plib_tcc0.h"
 
 #define DEVICE_DEBUG 1
+#define PACKET_TIMEOUT_MAX_COUNT 500
 
 void motors_set_enable(bool enabled);
 
@@ -49,7 +50,6 @@ extern struct sbus_params weapon_sbus_params;
 #ifdef BOARD_NAME_MEANBEAN_rev1
 #include "boards/meanbean-rev1.h"
 #endif
-
 
 
 struct sign_magnitude {

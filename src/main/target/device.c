@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "device.h"
 #include "sercom_usart.h"
 
@@ -55,7 +56,9 @@ struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct s
     return out;
 }
 
+static bool motors_enabled = false;
 void motors_set_enable(bool enabled) {
+    motors_enabled = enabled;
     //const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
     //PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
     motor_enable(MOTOR1, enabled);
@@ -70,6 +73,10 @@ void failsafe_activate(void) {
     for(int i = 0; i < MOTOR_COUNT; i++) {
         motor_set_speed(i, g_motors[i].sbus_config->value_disabled);
     }
+}
+
+bool failsafe_active(void) {
+    return !motors_enabled;
 }
 
 void motor_enable(enum motor_channel channel, bool enable) {
@@ -96,16 +103,26 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     }
 }
 
-#define PACKET_TIMEOUT_MAX_COUNT 500
 volatile uint32_t packet_timeout_counter = 0;
 void packet_timer_watchdog_feed(void) {
     packet_timeout_counter = 0;
 }
 
+static char packet_timer_watchdog_tick_buf[32] = {0};
 void packet_timer_watchdog_tick(void) {
+    memset(packet_timer_watchdog_tick_buf, 0, sizeof(packet_timer_watchdog_tick_buf));
+    bool do_print = false;
+    if(failsafe_active()) {
+        strcat(packet_timer_watchdog_tick_buf, "FAILSAFE\r\n");
+        do_print = true;
+    }
     if(packet_timeout_counter++ >= PACKET_TIMEOUT_MAX_COUNT) {
-        //TODO remove failsafe_activate();
-        //serial_puts("Packet timeout!\r\n");
+        failsafe_activate();
+        strcat(packet_timer_watchdog_tick_buf, "Packet timeout!\r\n");
+        do_print = true;
+    }
+    if(do_print) {
+        serial_puts(packet_timer_watchdog_tick_buf);
     }
 }
 
