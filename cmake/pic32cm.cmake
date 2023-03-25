@@ -122,7 +122,6 @@ main_sources(PIC32CM_MC00_SRC
     target/drivers/plib_dmac.c
     target/drivers/plib_systick.c
     target/drivers/timer.c
-    target/drivers/stdio.c
     target/drivers/l9958.c
     target/drivers/plib_wdt.c
     target/drivers/plib_nvmctrl.c

@@ -26,7 +26,7 @@ else()
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/${TOOLCHAIN}-checks.cmake")
 endif()
 
-project(D2 VERSION 1.0.0)
+project(D2 VERSION 1.1.0)
 
 enable_language(ASM)
 

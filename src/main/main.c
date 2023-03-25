@@ -85,6 +85,7 @@ void cmd_prompt(char cmd) {
             //todo safeguard? for(;;) {}
             break;
         default:
+            debug_puts("?\n");
             break;
     }
 }
@@ -138,7 +139,7 @@ int main(void) {
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
     for(uint32_t i = 0; true; i++) {
-        fport_tick();
+//        fport_tick();
         if(ftdiRead) {
             ftdiRead = false;
             cmd_prompt(x[0]);

@@ -65,6 +65,10 @@ void motors_set_enable(bool enabled) {
     motor_enable(MOTOR2, enabled);
     motor_enable(MOTOR3, enabled);
     motor_enable(MOTOR4, enabled);
+
+    if(enabled) {
+        serial_puts("OK");
+    }
 }
 
 void failsafe_activate(void) {

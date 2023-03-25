@@ -5,6 +5,14 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "plib_dmac.h"
+#include "fport_dma.h"
+#include "fport_stats.h"
+
+#define FPORT_START_OF_FRAME 0x7e
+#define FPORT_END_OF_FRAME 0x7e
+
+#define FPORT_STUFF_MARK 0x7d
+#define FPORT_XOR_VAL 0x20
 
 struct fport_frame {
     uint8_t length;
@@ -29,8 +37,23 @@ struct fport_frame {
     uint8_t flags;
     uint8_t rssi;
     uint8_t crc;
-//    uint8_t eof;
+    uint8_t eof;
 } __attribute__((__packed__));
+
+struct __attribute__((packed)) fport_telemetry {
+    uint8_t len;
+    uint8_t uplink;
+    uint8_t type;
+    uint16_t id;
+    uint32_t data;
+    uint8_t crc;
+};
+
+union fport_pkt {
+    struct fport_frame ctrl;
+    struct fport_telemetry tele;
+    uint8_t bytes[30];
+};
 
 #define SBUS_FLAG_CHANNEL_17        (1 << 0)
 #define SBUS_FLAG_CHANNEL_18        (1 << 1)
@@ -39,7 +62,6 @@ struct fport_frame {
 
 void fport_tick(void);
 void fport_enable_printing(bool enable);
-void fport_dma_register(void);
 uint32_t fport_valid_frame_rate(void);
 
 #endif //INAV_FPORT_H
