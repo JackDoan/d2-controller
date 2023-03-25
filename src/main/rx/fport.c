@@ -186,8 +186,8 @@ void fport_proc_packet(union fport_pkt* pkt) {
     }
 //    bool chan17 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_17;
 //    bool chan18 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_18;
-
-    if((pkt->ctrl.chan15 < 200) && (SYSTICK_GetTickCounter() < 5000)) {
+    bool cal_switch = (pkt->ctrl.chan15 < 200) && (pkt->ctrl.chan15 > 50);
+    if(cal_switch && (SYSTICK_GetTickCounter() < 5000)) {
         if(!fport_cal_mode) {
             for (enum motor_channel chan = 0; chan < MOTOR_COUNT; chan++) {
                 struct motor_t *motor = get_motor(chan);
@@ -211,7 +211,7 @@ void fport_proc_packet(union fport_pkt* pkt) {
         char fport_print_buf[128] = {0};
 //        if(!fport_cal_mode) {
 //            sprintf(fport_print_buf, "%04d %04d %04d %04d %04d %04d %02x 16:%d %03d %02x %lu %lu %lu %lu\r\n",
-////                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
+//                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
 //                    pkt->ctrl.chan0,
 //                    pkt->ctrl.chan1,
 //                    pkt->ctrl.chan2,

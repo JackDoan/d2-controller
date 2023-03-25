@@ -4,20 +4,6 @@
 #include "sercom_usart.h"
 #include "plib_nvmctrl.h"
 
-struct sbus_params drive_sbus_params = {
-        .max = 1800,
-        .mid = 992,
-        .min = 173,
-        .deadband = 3,
-};
-
-struct sbus_params weapon_sbus_params = {
-        .max = 1800,
-        .mid = 992,
-        .min = 173,
-        .deadband = 3,
-};
-
 static struct motor_t g_motors[] = {
         MOTOR_1_CONFIG,
         MOTOR_2_CONFIG,
@@ -99,18 +85,14 @@ void motor_cal(enum motor_channel channel, int sbus_val) {
     struct motor_t* motor = &g_motors[channel];
     if(motor->output == PORT_PIN_NONE)
         return;
-    if(motor->is_direct) {
-        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 800));
-    } else {
-        if (sbus_val < motor->sbus_config.min) {
-            motor->sbus_config.min = sbus_val;
-        }
-        else if (sbus_val > motor->sbus_config.max) {
-            motor->sbus_config.max = sbus_val;
-        }
-        else {
-            motor->sbus_config.mid = (motor->sbus_config.mid+sbus_val)/2;
-        }
+    if (sbus_val < motor->sbus_config.min) {
+        motor->sbus_config.min = sbus_val;
+    }
+    else if (sbus_val > motor->sbus_config.max) {
+        motor->sbus_config.max = sbus_val;
+    }
+    else {
+        motor->sbus_config.mid = (motor->sbus_config.mid+sbus_val)/2;
     }
 }
 
@@ -119,7 +101,8 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     if(motor->output == PORT_PIN_NONE)
         return;
     if(motor->is_direct) {
-        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 800));
+        uint32_t offset = motor->sbus_config.mid - motor->sbus_config.min;
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + offset));
     } else {
         struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor);
         TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
