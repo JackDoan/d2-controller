@@ -14,7 +14,7 @@ void NVMCTRL_CacheInvalidate(void) {
     NVMCTRL_REGS->NVMCTRL_CTRLA = NVMCTRL_CTRLA_CMD_INVALL | NVMCTRL_CTRLA_CMDEX_KEY;
 }
 
-bool NVMCTRL_DATA_FLASH_Read( uint32_t *data, uint32_t length, const uint32_t address ) {
+bool NVMCTRL_DATA_FLASH_Read( uint32_t *data, const uint32_t address, uint32_t length) {
     (void) memcpy(data, (uint32_t *)address, length);
     return true;
 }

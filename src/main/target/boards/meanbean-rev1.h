@@ -45,8 +45,8 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL2, \
-    .sbus_config = &drive_sbus_params, \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 //weapon
 #define MOTOR_2_CONFIG {\
@@ -56,9 +56,9 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC1_REGS, \
     .pwm_channel = TCC_CHANNEL0, \
-    .sbus_config = &weapon_sbus_params,    \
+    .sbus_config = WEAPON_PARAMS_DEFAULT,    \
     .is_direct = true,                    \
-    }
+    .value_disabled = 16}
 
 //left
 #define MOTOR_3_CONFIG {\
@@ -68,8 +68,8 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL1, \
-    .sbus_config = &drive_sbus_params, \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 //right
 #define MOTOR_4_CONFIG {\
@@ -79,7 +79,7 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL0, \
-    .sbus_config = &drive_sbus_params, \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 #endif //D2_MEANBEAN_REV1_H

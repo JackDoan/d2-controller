@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include "fport.h"
 #include "sercom_usart.h"
 #include "rx/frsky_crc.h"
@@ -19,8 +20,14 @@ static struct packet_stats g_packet_stats = {0};
 
 static union fport_pkt fport_buf = {0};
 static uint8_t fport_idx = 0;
-
+static bool fport_cal_mode = false;
 static bool fport_print = false;
+static enum fport_state state = FPORT_SOF;
+struct fport_dma_context {
+    bool byte_stuffed;
+    uint8_t dma_rx[30];
+};
+
 
 uint32_t fport_valid_frame_rate(void) {
     return g_packet_stats.valid_packets * 10000 / g_packet_stats.total_packets;
@@ -70,7 +77,10 @@ static void fport_tx(const uint8_t* buf) {
 static void fport_proc_telemetry_req(union fport_pkt *pkt) {
     //note: very timing sensitive. Don't remove the delay
     static uint8_t idx_to_send = 0;
-
+    if(fport_print) {
+        char fport_print_buf[64] = {0};
+        print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
+    }
     if(!fport_check_telemetry_packet(pkt)) {
         return;
     }
@@ -122,7 +132,7 @@ static void fport_proc_telemetry_req(union fport_pkt *pkt) {
             break;
         case 8:
             data.tele.id = 0x6915;
-            data.tele.data = L9958_has_problems();
+            data.tele.data = L9958_has_problems() + (fport_cal_mode*10000);
             break;
         case 9:
             data.tele.id = 0x6920;
@@ -174,45 +184,79 @@ void fport_proc_packet(union fport_pkt* pkt) {
         g_packet_stats.num_failsafes++;
         return;
     }
+//    bool chan17 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_17;
+//    bool chan18 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_18;
 
-    if (pkt->ctrl.flags & SBUS_FLAG_CHANNEL_17) {
-
+    if((pkt->ctrl.chan15 < 200) && (SYSTICK_GetTickCounter() < 5000)) {
+        if(!fport_cal_mode) {
+            for (enum motor_channel chan = 0; chan < MOTOR_COUNT; chan++) {
+                struct motor_t *motor = get_motor(chan);
+                motor->sbus_config.max = 1000;
+                motor->sbus_config.mid = 1000;
+                motor->sbus_config.min = 1000;
+                motor->sbus_config.deadband = 3;
+            }
+        }
+        fport_cal_mode = true;
+        motors_set_enable(false);
+    } else if (pkt->ctrl.chan15 > 200) {
+        if(fport_cal_mode) {
+            motor_cal_save();
+        }
+        fport_cal_mode = false;
+        motors_set_enable(true);
     }
-
-    if (pkt->ctrl.flags & SBUS_FLAG_CHANNEL_18) {
-
-    }
-
-    do_brakes(pkt->ctrl.chan4);
-    motor_set_speed(MOTOR1, pkt->ctrl.chan0);
-    motor_set_speed(MOTOR2, pkt->ctrl.chan1);
-    motor_set_speed(MOTOR3, pkt->ctrl.chan2);
-    motor_set_speed(MOTOR4, pkt->ctrl.chan3);
 
     if(fport_print) {
-//        sprintf(fport_print_buf, "%04lu %04d %04d %04d %04d %04d %04d %02x %03d %02x %lu %lu %lu %lu\r\n",
-//                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
-//                pkt->ctrl.chan0,
-//                pkt->ctrl.chan1,
-//                pkt->ctrl.chan2,
-//                pkt->ctrl.chan3,
+        char fport_print_buf[128] = {0};
+//        if(!fport_cal_mode) {
+//            sprintf(fport_print_buf, "%04d %04d %04d %04d %04d %04d %02x 16:%d %03d %02x %lu %lu %lu %lu\r\n",
+////                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
+//                    pkt->ctrl.chan0,
+//                    pkt->ctrl.chan1,
+//                    pkt->ctrl.chan2,
+//                    pkt->ctrl.chan3,
 //
-//                pkt->ctrl.chan4,
-//                pkt->ctrl.chan5,
+//                    pkt->ctrl.chan4,
+//                    pkt->ctrl.chan5,
 //
-//                pkt->ctrl.flags,
-//                pkt->ctrl.rssi, pkt->ctrl.crc,
-//                g_packet_stats.total_packets-g_packet_stats.valid_packets,
-//                g_packet_stats.total_packets, g_packet_stats.discarded_bytes, g_packet_stats.total_bytes);
-//        serial_puts(fport_print_buf);
+//                    pkt->ctrl.flags,
+//                    pkt->ctrl.chan15,
+//                    pkt->ctrl.rssi, pkt->ctrl.crc,
+//                    g_packet_stats.total_packets-g_packet_stats.valid_packets,
+//                    g_packet_stats.total_packets, g_packet_stats.discarded_bytes, g_packet_stats.total_bytes);
+//        }
+//        else {
+            sprintf(fport_print_buf, 
+                    "1: %04d %04d %04d / "
+                    "2: %04d %04d %04d / "
+                    "3: %04d %04d %04d / "
+                    "4: %04d %04d %04d\r\n",
+                    get_motor(MOTOR1)->sbus_config.max, get_motor(MOTOR1)->sbus_config.mid, get_motor(MOTOR1)->sbus_config.min,
+                    get_motor(MOTOR2)->sbus_config.max, get_motor(MOTOR2)->sbus_config.mid, get_motor(MOTOR2)->sbus_config.min,
+                    get_motor(MOTOR3)->sbus_config.max, get_motor(MOTOR3)->sbus_config.mid, get_motor(MOTOR3)->sbus_config.min,
+                    get_motor(MOTOR4)->sbus_config.max, get_motor(MOTOR4)->sbus_config.mid, get_motor(MOTOR4)->sbus_config.min);
+//        }
+        
+        serial_puts(fport_print_buf);
 //        print_hex(fport_print_buf, pkt, fport_idx);
+    }
+    if (fport_cal_mode) {
+        motor_cal(MOTOR1, pkt->ctrl.chan0);
+        motor_cal(MOTOR2, pkt->ctrl.chan1);
+        motor_cal(MOTOR3, pkt->ctrl.chan2);
+        motor_cal(MOTOR4, pkt->ctrl.chan3);
+    }
+    else {
+        do_brakes(pkt->ctrl.chan4);
+        motor_set_speed(MOTOR1, pkt->ctrl.chan0);
+        motor_set_speed(MOTOR2, pkt->ctrl.chan1);
+        motor_set_speed(MOTOR3, pkt->ctrl.chan2);
+        motor_set_speed(MOTOR4, pkt->ctrl.chan3);
     }
 }
 
-struct fport_dma_context {
-    bool byte_stuffed;
-    uint8_t dma_rx[30];
-};
+
 
 static struct fport_dma_context g_context = {0};
 
@@ -228,8 +272,6 @@ void fport_dma_register(void) {
 uint8_t fport_dma_get_byte(void) {
     return g_context.dma_rx[0];
 }
-
-static enum fport_state state = FPORT_SOF;
 
 void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
     struct fport_dma_context *context = (struct fport_dma_context*)contextHandle;
@@ -282,10 +324,10 @@ void fport_tick(void) {
         case FPORT_FOUND:
             fport_buf.bytes[fport_idx++] = x;
             if(fport_idx >= (fport_buf.ctrl.length + 2)) {
-                if(fport_print) {
-                    char fport_print_buf[64] = {0};
-                    print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
-                }
+//                if(fport_print) {
+//                    char fport_print_buf[64] = {0};
+//                    print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
+//                }
                 switch(fport_buf.ctrl.kind) { //todo if we're in pkt timeout, stop doing telemetry frames
                     case 0:
                         fport_proc_packet(&fport_buf);

@@ -2,13 +2,13 @@
 #include <string.h>
 #include "device.h"
 #include "sercom_usart.h"
+#include "plib_nvmctrl.h"
 
 struct sbus_params drive_sbus_params = {
         .max = 1800,
         .mid = 992,
         .min = 173,
         .deadband = 3,
-        .value_disabled = 8,
 };
 
 struct sbus_params weapon_sbus_params = {
@@ -16,7 +16,6 @@ struct sbus_params weapon_sbus_params = {
         .mid = 992,
         .min = 173,
         .deadband = 3,
-        .value_disabled = 8,
 };
 
 static struct motor_t g_motors[] = {
@@ -26,15 +25,14 @@ static struct motor_t g_motors[] = {
         MOTOR_4_CONFIG
 };
 
-struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct sbus_params* params) {
+struct sign_magnitude sbus_to_duty_cycle(int sbus_val, struct motor_t *motor) {
     struct sign_magnitude out = {
         .sign = false,
         .magnitude = 0
     };
 
-    if(sbus_val == params->value_disabled) {
-        return out;
-    }
+    uint32_t period = motor->pwm_bank->TCC_PER;
+    struct sbus_params *params = &motor->sbus_config;
 
     struct sbus_params params_scaled = {
             .max = params->max - params->min,
@@ -74,7 +72,7 @@ void failsafe_activate(void) {
     motors_set_enable(false);
     //set PWM to midpoint (off)
     for(int i = 0; i < MOTOR_COUNT; i++) {
-        motor_set_speed(i, g_motors[i].sbus_config->value_disabled);
+        motor_set_speed(i, g_motors[i].value_disabled);
     }
 }
 
@@ -93,6 +91,29 @@ void do_brakes(int sbus_val) {
     motors_set_enable(button_not_pressed);
 }
 
+struct motor_t* get_motor(enum motor_channel channel) {
+    return &g_motors[channel];
+}
+
+void motor_cal(enum motor_channel channel, int sbus_val) {
+    struct motor_t* motor = &g_motors[channel];
+    if(motor->output == PORT_PIN_NONE)
+        return;
+    if(motor->is_direct) {
+        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 800));
+    } else {
+        if (sbus_val < motor->sbus_config.min) {
+            motor->sbus_config.min = sbus_val;
+        }
+        else if (sbus_val > motor->sbus_config.max) {
+            motor->sbus_config.max = sbus_val;
+        }
+        else {
+            motor->sbus_config.mid = (motor->sbus_config.mid+sbus_val)/2;
+        }
+    }
+}
+
 void motor_set_speed(enum motor_channel channel, int sbus_val) {
     struct motor_t* motor = &g_motors[channel];
     if(motor->output == PORT_PIN_NONE)
@@ -100,7 +121,7 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     if(motor->is_direct) {
         TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + 800));
     } else {
-        struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor->pwm_bank->TCC_PER, motor->sbus_config);
+        struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor);
         TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
         PORT_PinWrite(motor->direction, out.sign);
     }
@@ -143,11 +164,25 @@ void fport_enable_tx(bool enable) {
 }
 
 void motors_init(void) {
+    struct sbus_params motor_cal[MOTOR_COUNT] = {0};
+    NVMCTRL_DATA_FLASH_Read((uint32_t *) &motor_cal, CAL_NVM_ADDR, sizeof(struct sbus_params) * MOTOR_COUNT);
     for(int i = 0; i < MOTOR_COUNT; i++) {
         PORT_PinOutputEnable(g_motors[i].enable);
         PORT_PinClear(g_motors[i].enable);
         PORT_PinOutputEnable(g_motors[i].direction);
         PORT_PinClear(g_motors[i].direction);
         PORT_PinPeripheralFunctionConfig(g_motors[i].output, g_motors[i].output_func);
+        memcpy(&g_motors[i].sbus_config, &motor_cal[i], sizeof(struct sbus_params));
     }
+}
+
+void motor_cal_save(void) {
+    uint32_t pagebuf[NVMCTRL_DATAFLASH_PAGESIZE] = {0};
+    for(int i = 0; i < MOTOR_COUNT; i++) {
+        memcpy(&pagebuf[i*sizeof(struct sbus_params)/4], &g_motors[i].sbus_config, sizeof(struct sbus_params));
+    }
+    NVMCTRL_DATA_FLASH_RowErase(CAL_NVM_ADDR);
+    while (NVMCTRL_IsBusy()) {}
+    NVMCTRL_DATA_FLASH_PageWrite(pagebuf, CAL_NVM_ADDR);
+    while (NVMCTRL_IsBusy()) {}
 }

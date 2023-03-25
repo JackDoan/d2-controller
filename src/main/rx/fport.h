@@ -12,7 +12,7 @@
 #define FPORT_STUFF_MARK 0x7d
 #define FPORT_XOR_VAL 0x20
 
-struct fport_frame {
+struct __attribute__((packed, aligned(1))) fport_frame {
     uint8_t length;
     uint8_t kind;
     // 176 bits of data (11 bits per channel * 16 channels) = 22 bytes.
@@ -36,9 +36,9 @@ struct fport_frame {
     uint8_t rssi;
     uint8_t crc;
     uint8_t eof;
-} __attribute__((__packed__));
+};
 
-struct __attribute__((packed)) fport_telemetry {
+struct __attribute__((packed, aligned(1))) fport_telemetry {
     uint8_t len;
     uint8_t uplink;
     uint8_t type;

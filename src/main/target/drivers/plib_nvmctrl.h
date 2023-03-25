@@ -41,7 +41,7 @@ bool NVMCTRL_PageWrite(const uint32_t* data, uint32_t address);
 
 bool NVMCTRL_RowErase(uint32_t address);
 
-bool NVMCTRL_DATA_FLASH_Read(uint32_t *data, uint32_t length, uint32_t address);
+bool NVMCTRL_DATA_FLASH_Read(uint32_t *data, uint32_t address, uint32_t length);
 
 bool NVMCTRL_DATA_FLASH_PageWrite(const uint32_t* data, uint32_t address);
 

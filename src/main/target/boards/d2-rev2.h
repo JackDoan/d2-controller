@@ -52,8 +52,8 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL2, \
-    .sbus_config = &drive_sbus_params \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT,   \
+    .value_disabled = 16}
 
 #define MOTOR_2_CONFIG {\
     .enable = EN2, \
@@ -62,8 +62,8 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL3, \
-    .sbus_config = &drive_sbus_params \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 #define MOTOR_3_CONFIG {\
     .enable = EN3, \
@@ -72,8 +72,8 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL1, \
-    .sbus_config = &drive_sbus_params \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 #define MOTOR_4_CONFIG {\
     .enable = EN4, \
@@ -82,7 +82,7 @@
     .output_func = PERIPHERAL_FUNCTION_F, \
     .pwm_bank = TCC0_REGS, \
     .pwm_channel = TCC_CHANNEL0, \
-    .sbus_config = &drive_sbus_params \
-    }
+    .sbus_config = DRIVE_PARAMS_DEFAULT, \
+    .value_disabled = 16}
 
 #endif //D2_D2_REV2_H

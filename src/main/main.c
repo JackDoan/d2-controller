@@ -134,7 +134,6 @@ int main(void) {
     //todo calibration of pulse len
     //todo improve CRC error rate?
     //todo configure brown-out detector
-    //todo read more than one byte at a time
 
     serial_puts("D2 Motherboard\r\n");
     serial_gets(x, 1);
