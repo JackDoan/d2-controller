@@ -58,6 +58,9 @@ struct sign_magnitude sbus_to_duty_cycle(int sbus_val, uint32_t period, struct s
 
 static bool motors_enabled = false;
 void motors_set_enable(bool enabled) {
+    if(enabled && !motors_enabled) {
+        serial_puts("OK");
+    }
     motors_enabled = enabled;
     //const uint32_t en_mask = GET_PIN_MASK(EN1) | GET_PIN_MASK(EN2) | GET_PIN_MASK(EN3) | GET_PIN_MASK(EN4);
     //PORT_GroupWrite(PORT_GROUP_0,en_mask,enabled & en_mask);
@@ -65,10 +68,6 @@ void motors_set_enable(bool enabled) {
     motor_enable(MOTOR2, enabled);
     motor_enable(MOTOR3, enabled);
     motor_enable(MOTOR4, enabled);
-
-    if(enabled) {
-        serial_puts("OK");
-    }
 }
 
 void failsafe_activate(void) {
