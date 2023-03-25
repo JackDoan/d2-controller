@@ -45,6 +45,7 @@ typedef struct {
     volatile USART_ERROR errorStatus;
     volatile uint32_t ctrla_defaults;
     volatile uint32_t ctrlb_defaults;
+    volatile uint32_t baud_setting;
 } SERCOM_USART_OBJECT;
 
 

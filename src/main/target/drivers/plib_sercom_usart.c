@@ -5,8 +5,10 @@
 #include "plib_systick.h"
 
 /* SERCOM USART baud value for 115200 Hz baud rate */
+/*  65536 * (1 - 16 * (115200 /48000000)) */
 #define SERCOM_115200_BAUD            (63019UL)
-
+#define SERCOM_230400_BAUD            (60503UL)
+#define SERCOM_460800_BAUD            (43690)
 #define SERCOM_CTRLA_SANE ( \
     SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK | \
     SERCOM_USART_INT_CTRLA_DORD_Msk |           \
@@ -24,6 +26,7 @@ static SERCOM_USART_OBJECT ftdiUSARTObj = {
                           SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
                           SERCOM_USART_INT_CTRLB_RXEN_Msk |
                           SERCOM_USART_INT_CTRLB_TXEN_Msk,
+        .baud_setting = SERCOM_230400_BAUD,
 };
 static SERCOM_USART_OBJECT rxUSARTObj = {
         .ctrla_defaults = SERCOM_CTRLA_SANE |
@@ -32,6 +35,7 @@ static SERCOM_USART_OBJECT rxUSARTObj = {
         .ctrlb_defaults = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
                           SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
                           SERCOM_USART_INT_CTRLB_RXEN_Msk, //no txen by default!
+        .baud_setting = SERCOM_115200_BAUD,
 };
 
 static SERCOM_USART_OBJECT* get_object(sercom_registers_t* sercom) {
@@ -82,7 +86,7 @@ void SERCOM_USART_Initialize(sercom_registers_t* sercom) {
     sercom->USART_INT.SERCOM_CTRLA = obj->ctrla_defaults;
     SERCOM_Sync(sercom);
 
-    sercom->USART_INT.SERCOM_BAUD = (uint16_t)SERCOM_USART_INT_BAUD_BAUD(SERCOM_115200_BAUD);
+    sercom->USART_INT.SERCOM_BAUD = (uint16_t)SERCOM_USART_INT_BAUD_BAUD(obj->baud_setting);
     SERCOM_Sync(sercom);
 
     sercom->USART_INT.SERCOM_CTRLB = obj->ctrlb_defaults;
@@ -318,7 +322,9 @@ void serial_puts(void *buffer) {
     //todo make this vararg?
     static char print_buf[128] = {0};
     if(!DMAC_ChannelIsBusy(DMAC_CHANNEL_0)) {
-        size_t len = snprintf(print_buf, sizeof(print_buf), "(%05ld) %s", SYSTICK_GetTickCounter(), (char*)buffer);
+//        size_t len = snprintf(print_buf, sizeof(print_buf), "(%05ld) %s", SYSTICK_GetTickCounter(), (char*)buffer);
+
+        size_t len = snprintf(print_buf, sizeof(print_buf), "%s", (char*)buffer);
         DMAC_ChannelTransfer(DMAC_CHANNEL_0, print_buf, (const void *)&FTDI->USART_INT.SERCOM_DATA, len);
     }
 }
