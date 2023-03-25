@@ -323,6 +323,12 @@ void serial_puts(void *buffer) {
     }
 }
 
+void debug_puts(void *buffer) {
+#if DEVICE_DEBUG
+    serial_puts(buffer);
+#endif
+}
+
 void serial_gets(void *buffer, size_t len) {
     DMAC_ChannelTransfer(DMAC_CHANNEL_1, (const void *)&FTDI->USART_INT.SERCOM_DATA, buffer, len);
 }

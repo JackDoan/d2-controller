@@ -6,6 +6,8 @@
 #include "plib_port.h"
 #include "plib_tcc0.h"
 
+#define DEVICE_DEBUG 1
+
 void motors_set_enable(bool enabled);
 
 enum motor_channel {
