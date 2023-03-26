@@ -108,31 +108,31 @@ int main(void) {
     NVMCTRL_Initialize();
     PORT_Initialize();
     CLOCK_Initialize();
-    SYSTICK_TimerInitialize();
-    SYSTICK_TimerStart();
     DMAC_Initialize();
-    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
     fport_dma_register();
     NVIC_Initialize();
+    SERCOM_USART_Initialize(RX);
+
+    SYSTICK_TimerInitialize();
+    SYSTICK_TimerStart();
+
     Timer_Init(TC2_REGS);
     TCC_PWMInitialize(TCC0_REGS);
     TCC_PWMInitialize(TCC1_REGS);
 
-    ADC0_Initialize(); //todo re-order some of this stuff so we start connecting to the RX faster?
+    WDT_Enable();
+
+    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
+    SERCOM_USART_Initialize(FTDI);
+
+    L9958_Init();
+
+    ADC0_Initialize();
     ADC0_Enable();
     ADC0_ConversionStart();
 
     TSENS_Init();
-
-    WDT_Enable();
-
-    SERCOM_USART_Initialize(FTDI);
-    SERCOM_USART_Initialize(RX);
-    L9958_Init();
-
     //todo set PAC after configuring peripherals
-    //todo calibration of pulse len
-    //todo improve CRC error rate?
     //todo configure brown-out detector
 
     serial_puts("D2 Motherboard\r\n");

@@ -9,8 +9,6 @@
 
 #define DEVICE_DEBUG 1
 #define PACKET_TIMEOUT_MAX_COUNT 500
-
-
 #define CAL_NVM_ADDR NVMCTRL_DATAFLASH_START_ADDRESS
 
 void motors_set_enable(bool enabled);
