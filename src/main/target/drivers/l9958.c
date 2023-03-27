@@ -70,6 +70,7 @@ static struct l9958_context g_context = {0};
 
 void do_config_transaction(enum motor_channel channel) {
     SERCOM_SPI_WriteRead(
+        SPI,
         cs_lines[channel],
         &config_data,
         2,
@@ -88,7 +89,7 @@ uint16_t L9958_Diag_Read(enum motor_channel channel) {
 
 void L9958_Init(void) {
     SERCOM_SPI_Initialize(SPI);
-    SERCOM_SPI_CallbackRegister(spi_callback);
+    SERCOM_SPI_CallbackRegister(SPI, spi_callback);
 }
 
 void L9958_Tick(void) {

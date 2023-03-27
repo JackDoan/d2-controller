@@ -34,6 +34,7 @@
 #define FTDI SERCOM1_REGS
 #define RX SERCOM0_REGS
 #define SPI SERCOM3_REGS
+#define DSHOT SERCOM2_REGS
 
 #define FTDI_DMA_CHANNEL DMAC_CHANNEL_1
 #define FPORT_DMA_CHANNEL DMAC_CHANNEL_3
@@ -58,6 +59,19 @@
     .pwm_channel = TCC_CHANNEL0, \
     .sbus_config = WEAPON_PARAMS_DEFAULT,    \
     .is_direct = true,                    \
+    .value_disabled = 16}
+
+
+//dshot
+#define MOTOR_2_CONFIG_DSHOT {\
+    .enable = PORT_PIN_NONE, \
+    .direction = PORT_PIN_NONE, \
+    .output = PORT_PIN_PA08, \
+    .output_func = PERIPHERAL_FUNCTION_D, \
+    .pwm_bank = TCC1_REGS, \
+    .pwm_channel = TCC_CHANNEL0, \
+    .sbus_config = WEAPON_PARAMS_DEFAULT,    \
+    .is_dshot = true,                    \
     .value_disabled = 16}
 
 //left

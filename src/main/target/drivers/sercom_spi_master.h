@@ -26,6 +26,7 @@ typedef struct {
     SERCOM_SPI_CALLBACK      callback;
     uint32_t                 status;
     PORT_PIN                 cs_line;
+    uint32_t                 baud;
 } SPI_OBJECT;
 
 // *****************************************************************************
@@ -183,7 +184,7 @@ void SERCOM_SPI_Initialize (sercom_registers_t* sercom);
     None.
 */
 
-bool SERCOM_SPI_WriteRead(PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize);
+bool SERCOM_SPI_WriteRead(sercom_registers_t* sercom, PORT_PIN cs_line, void* pTransmitData, size_t txSize, void* pReceiveData, size_t rxSize);
 
 // *****************************************************************************
 /* Function:
@@ -354,7 +355,7 @@ bool SERCOM_SPI_Write(sercom_registers_t* sercom, void* pTransmitData, size_t tx
 bool SERCOM_SPI_Read(sercom_registers_t* sercom, void* pReceiveData, size_t rxSize);
 
 
-void SERCOM_SPI_CallbackRegister(SERCOM_SPI_CALLBACK callBack);
+void SERCOM_SPI_CallbackRegister(sercom_registers_t* sercom, SERCOM_SPI_CALLBACK callBack);
 
 // *****************************************************************************
 /* Function:

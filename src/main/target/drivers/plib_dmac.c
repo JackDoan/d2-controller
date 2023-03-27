@@ -58,6 +58,18 @@ void DMAC_Initialize(void) {
     dmacChannelObj[1].inUse = 1U;
     DMAC_REGS->DMAC_CHINTENSET = (uint8_t)(DMAC_CHINTENSET_TERR_Msk | DMAC_CHINTENSET_TCMPL_Msk);
 
+    /***************** Configure DMA channel 2 ********************/
+
+    DMAC_REGS->DMAC_CHID = 2U;
+    DMAC_REGS->DMAC_CHCTRLB = DMAC_CHCTRLB_TRIGACT(2UL) |
+                              DMAC_CHCTRLB_TRIGSRC(7UL) |
+                              DMAC_CHCTRLB_LVL(0UL) ;
+
+    descriptor_section[2].DMAC_BTCTRL = (uint16_t)(DMAC_BTCTRL_BLOCKACT_INT | DMAC_BTCTRL_BEATSIZE_BYTE | DMAC_BTCTRL_VALID_Msk | DMAC_BTCTRL_SRCINC_Msk );
+
+    dmacChannelObj[2].inUse = 1U;
+    DMAC_REGS->DMAC_CHINTENSET = (uint8_t)(DMAC_CHINTENSET_TERR_Msk | DMAC_CHINTENSET_TCMPL_Msk);
+
     /***************** Configure DMA channel 3 ********************/
 
     DMAC_REGS->DMAC_CHID = 3U;

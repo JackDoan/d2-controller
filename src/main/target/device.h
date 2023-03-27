@@ -37,6 +37,7 @@ struct motor_t {
     enum tcc_channel pwm_channel;
     struct sbus_params sbus_config;
     bool is_direct;
+    bool is_dshot;
     int value_disabled;
 };
 

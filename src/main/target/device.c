@@ -3,6 +3,7 @@
 #include "device.h"
 #include "sercom_usart.h"
 #include "plib_nvmctrl.h"
+#include "dshot.h"
 
 static struct motor_t g_motors[] = {
         MOTOR_1_CONFIG,
@@ -28,6 +29,9 @@ struct sign_magnitude sbus_to_duty_cycle(int sbus_val, struct motor_t *motor) {
         out.magnitude = ((val * period_scaled) / max_scaled);
         //lowest output still needs to be 1ms, or 5%
         out.magnitude += period_scaled;
+    }
+    else if(motor->is_dshot) {
+        out.magnitude = (val * DSHOT_MAX) / max_scaled;
     }
     else {
         int mid_scaled = motor->sbus_config.mid - motor->sbus_config.min;

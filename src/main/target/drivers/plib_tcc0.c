@@ -26,6 +26,12 @@ static struct tcc_config configs[] = {
             .TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV16,
             .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(2UL), //cc0 is all channels
         },
+//        {
+//                .DRVCTRL = TCC_DRVCTRL_INVEN_ALL_Msk,
+//                .TCC_PER = 4000,  //6Khz (48M / 2 / TCC_PER = freq)
+//                .TCC_CTRLA = TCC_CTRLA_PRESCALER_DIV1,
+//                .TCC_WEXCTRL = TCC_WEXCTRL_OTMX(2UL), //cc0 is all channels
+//        },
 };
 
 static inline struct tcc_config* get_config(tcc_registers_t* regs) {

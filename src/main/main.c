@@ -12,6 +12,7 @@
 #include "l9958.h"
 #include "plib_wdt.h"
 #include "plib_nvmctrl.h"
+#include "dshot.h"
 
 char cmd_resp_buf[64] = {0};
 
@@ -126,6 +127,7 @@ int main(void) {
     SERCOM_USART_Initialize(FTDI);
 
     L9958_Init();
+//    dshot_init();
 
     ADC0_Initialize();
     ADC0_Enable();
