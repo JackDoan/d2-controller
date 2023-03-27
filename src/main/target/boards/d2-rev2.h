@@ -55,6 +55,7 @@
     .sbus_config = DRIVE_PARAMS_DEFAULT,   \
     .value_disabled = 16}
 
+//physical pin 14, TCC[0] WO[3]
 #define MOTOR_2_CONFIG {\
     .enable = EN2, \
     .direction = DIR2, \

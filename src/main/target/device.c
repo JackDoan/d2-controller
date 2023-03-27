@@ -12,31 +12,37 @@ static struct motor_t g_motors[] = {
 };
 
 struct sign_magnitude sbus_to_duty_cycle(int sbus_val, struct motor_t *motor) {
-    struct sign_magnitude out = {
-        .sign = false,
-        .magnitude = 0
-    };
-
+    struct sign_magnitude out = { 0 };
+    int max_scaled = motor->sbus_config.max - motor->sbus_config.min;
     uint32_t period = motor->pwm_bank->TCC_PER;
-    struct sbus_params *params = &motor->sbus_config;
+    int val = sbus_val - motor->sbus_config.min;
 
-    struct sbus_params params_scaled = {
-            .max = params->max - params->min,
-            .mid = params->mid - params->min,
-            .min = 0,
-            .deadband = params->deadband
-    };
-
-    int val = (sbus_val - params->min) - params_scaled.mid;
-    out.sign = val > 0;
-    int abs_val = abs(val);
-    bool outside_deadband = abs_val > params_scaled.deadband;
-    if(outside_deadband) {
-        if(out.sign)
-            out.magnitude = (abs_val * period) / (params_scaled.max - params_scaled.mid);
-        else
-            out.magnitude = (abs_val * period) / (params_scaled.mid);
+    if(motor->is_direct) {
+        if (motor->value_disabled == sbus_val) {
+            out.magnitude = 0;
+            return out;
+        }
+        //50HZ, 29760 total counts
+        uint32_t period_scaled = period/20; //total travel of 1ms, or 5%
+        //need to scale the available counts between min-stick and max-stick
+        out.magnitude = ((val * period_scaled) / max_scaled);
+        //lowest output still needs to be 1ms, or 5%
+        out.magnitude += period_scaled;
     }
+    else {
+        int mid_scaled = motor->sbus_config.mid - motor->sbus_config.min;
+        val -= mid_scaled;
+        out.sign = (val > 0) & !motor->is_direct;
+        int abs_val = abs(val);
+        bool outside_deadband = abs_val > motor->sbus_config.deadband;
+        if(outside_deadband) {
+            if(out.sign) //need to scale the available counts between middle-stick and max-stick
+                out.magnitude = (abs_val * period) / (max_scaled - mid_scaled);
+            else //need to scale the available counts between middle-stick and min-stick
+                out.magnitude = (abs_val * period) / mid_scaled;
+        }
+    }
+
     return out;
 }
 
@@ -100,14 +106,9 @@ void motor_set_speed(enum motor_channel channel, int sbus_val) {
     struct motor_t* motor = &g_motors[channel];
     if(motor->output == PORT_PIN_NONE)
         return;
-    if(motor->is_direct) {
-        uint32_t offset = motor->sbus_config.mid - motor->sbus_config.min;
-        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, (sbus_val + offset));
-    } else {
-        struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor);
-        TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
-        PORT_PinWrite(motor->direction, out.sign);
-    }
+    struct sign_magnitude out = sbus_to_duty_cycle(sbus_val, motor);
+    TCC_PWM24bitDutySet(motor->pwm_bank, motor->pwm_channel, out.magnitude);
+    PORT_PinWrite(motor->direction, out.sign);
 }
 
 volatile uint32_t packet_timeout_counter = 0;
@@ -148,21 +149,29 @@ void fport_enable_tx(bool enable) {
 
 void motors_init(void) {
     struct sbus_params motor_cal[MOTOR_COUNT] = {0};
-    NVMCTRL_DATA_FLASH_Read((uint32_t *) &motor_cal, CAL_NVM_ADDR, sizeof(struct sbus_params) * MOTOR_COUNT);
+    //read into stack first to avoid packed-struct alignment BS
+    NVMCTRL_DATA_FLASH_Read((uint32_t *) &motor_cal[0], CAL_NVM_ADDR, sizeof(struct sbus_params) * MOTOR_COUNT);
     for(int i = 0; i < MOTOR_COUNT; i++) {
         PORT_PinOutputEnable(g_motors[i].enable);
         PORT_PinClear(g_motors[i].enable);
         PORT_PinOutputEnable(g_motors[i].direction);
         PORT_PinClear(g_motors[i].direction);
         PORT_PinPeripheralFunctionConfig(g_motors[i].output, g_motors[i].output_func);
-        memcpy(&g_motors[i].sbus_config, &motor_cal[i], sizeof(struct sbus_params));
+        if(motor_cal->max < 4096) {
+            //only load from NVM if data is remotely sane
+            memcpy(&g_motors[i].sbus_config, &motor_cal[i], sizeof(struct sbus_params));
+        }
     }
 }
 
 void motor_cal_save(void) {
     uint32_t pagebuf[NVMCTRL_DATAFLASH_PAGESIZE] = {0};
     for(int i = 0; i < MOTOR_COUNT; i++) {
-        memcpy(&pagebuf[i*sizeof(struct sbus_params)/4], &g_motors[i].sbus_config, sizeof(struct sbus_params));
+        memcpy(
+            &pagebuf[i*(sizeof(struct sbus_params)/sizeof(uint32_t))],
+            &g_motors[i].sbus_config,
+            sizeof(struct sbus_params)
+        );
     }
     NVMCTRL_DATA_FLASH_RowErase(CAL_NVM_ADDR);
     while (NVMCTRL_IsBusy()) {}

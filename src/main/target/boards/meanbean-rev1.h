@@ -48,7 +48,7 @@
     .sbus_config = DRIVE_PARAMS_DEFAULT, \
     .value_disabled = 16}
 
-//weapon
+//weapon on physical pin 11, TCC[1] WO[2]
 #define MOTOR_2_CONFIG {\
     .enable = PORT_PIN_NONE, \
     .direction = PORT_PIN_NONE, \

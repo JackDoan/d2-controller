@@ -9,6 +9,7 @@ struct tcc_config {
     uint32_t TCC_WEXCTRL;
 };
 
+//(48M / 2 / TCC_PER = freq)
 static struct tcc_config configs[] = {
         {
             .DRVCTRL = TCC_DRVCTRL_INVEN2_Msk |
