@@ -144,8 +144,7 @@ int main(void) {
             serial_gets(x, 1);
         }
         L9958_Tick();
-        WDT_Clear();
+        WDT_ClearWithSync();
         __WFI();
     }
 }
-
