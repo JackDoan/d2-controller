@@ -60,18 +60,27 @@ static bool fport_check_telemetry_packet(union fport_pkt* pkt) {
     return true;
 }
 
-static void fport_tx(const uint8_t* buf) {
-    fport_enable_tx(true);
+void fport_tx_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+    fport_enable_tx(false);
+}
+
+void fport_puts(const uint8_t* buffer) {
+    static char print_buf[64] = {0};
+    memset(print_buf, 0, sizeof(print_buf));
+    int print_buf_idx = 0;
     for (unsigned int i = 0; i < sizeof (struct fport_telemetry); i++) {
-        uint8_t c = buf[i];
+        uint8_t c = buffer[i];
         if (c == FPORT_STUFF_MARK || c == FPORT_START_OF_FRAME) {
-            SERCOM_USART_WriteByte(RX, FPORT_STUFF_MARK);
-            SERCOM_USART_WriteByte(RX, c ^ FPORT_XOR_VAL);
+            print_buf[print_buf_idx++] = FPORT_STUFF_MARK;
+            print_buf[print_buf_idx++] = c ^ FPORT_XOR_VAL;
         } else {
-            SERCOM_USART_WriteByte(RX, c);
+            print_buf[print_buf_idx++] = c;
         }
     }
-    fport_enable_tx(false);
+    if(!DMAC_ChannelIsBusy(FPORT_TX_DMA_CHANNEL)) {
+        fport_enable_tx(true);
+        DMAC_ChannelTransfer(FPORT_TX_DMA_CHANNEL, print_buf, (const void *)&RX->USART_INT.SERCOM_DATA, print_buf_idx);
+    }
 }
 
 static void fport_proc_telemetry_req(union fport_pkt *pkt) {
@@ -147,7 +156,7 @@ static void fport_proc_telemetry_req(union fport_pkt *pkt) {
     }
 
     data.tele.crc = frskyCheckSum(data.bytes, 8);
-    fport_tx(data.bytes);
+    fport_puts(data.bytes);
 }
 
 static bool fport_check_control_packet(struct fport_frame *frame) {
@@ -266,6 +275,7 @@ void fport_trigger(size_t len) {
 
 void fport_dma_register(void) {
     DMAC_ChannelCallbackRegister(FPORT_DMA_CHANNEL, fport_dma_callback, (uintptr_t) &g_context);
+    DMAC_ChannelCallbackRegister(FPORT_TX_DMA_CHANNEL, fport_tx_dma_callback, (uintptr_t) &g_context);
     fport_trigger(1);
 }
 

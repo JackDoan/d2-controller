@@ -116,8 +116,8 @@ void packet_timer_watchdog_feed(void) {
     packet_timeout_counter = 0;
 }
 
-static char packet_timer_watchdog_tick_buf[32] = {0};
 void packet_timer_watchdog_tick(void) {
+    static char packet_timer_watchdog_tick_buf[32] = {0};
     memset(packet_timer_watchdog_tick_buf, 0, sizeof(packet_timer_watchdog_tick_buf));
     bool do_print = false;
     if(failsafe_active()) {
@@ -157,7 +157,7 @@ void motors_init(void) {
         PORT_PinOutputEnable(g_motors[i].direction);
         PORT_PinClear(g_motors[i].direction);
         PORT_PinPeripheralFunctionConfig(g_motors[i].output, g_motors[i].output_func);
-        if(motor_cal->max < 4096) {
+        if((uint32_t)motor_cal[i].max < 4096U) {
             //only load from NVM if data is remotely sane
             memcpy(&g_motors[i].sbus_config, &motor_cal[i], sizeof(struct sbus_params));
         }

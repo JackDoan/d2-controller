@@ -1,13 +1,9 @@
-#ifndef PLIB_DMAC_H    // Guards against multiple inclusion
+#ifndef PLIB_DMAC_H
 #define PLIB_DMAC_H
 
 #include <device.h>
 #include <string.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus  // Provide C++ Compatibility
-    extern "C" {
-#endif
 
 typedef enum
 {
@@ -15,6 +11,7 @@ typedef enum
     DMAC_CHANNEL_1 = 1,
     DMAC_CHANNEL_2 = 2,
     DMAC_CHANNEL_3 = 3,
+    DMAC_CHANNEL_4 = 4,
 } DMAC_CHANNEL;
 
 typedef enum
@@ -65,15 +62,7 @@ typedef struct
 typedef uint32_t DMAC_CHANNEL_CONFIG;
 
 typedef void (*DMAC_CHANNEL_CALLBACK) (DMAC_TRANSFER_EVENT event, uintptr_t contextHandle);
-void DMAC_ChannelCallbackRegister (DMAC_CHANNEL channel, const DMAC_CHANNEL_CALLBACK eventHandler, const uintptr_t contextHandle);
-// *****************************************************************************
-// *****************************************************************************
-// Section: Interface Routines
-// *****************************************************************************
-// *****************************************************************************
-/* The following functions make up the methods (set of possible operations) of
-   this interface.
-*/
+void DMAC_ChannelCallbackRegister (DMAC_CHANNEL channel, DMAC_CHANNEL_CALLBACK eventHandler, uintptr_t contextHandle);
 void DMAC_Initialize( void );
 bool DMAC_ChannelTransfer (DMAC_CHANNEL channel, const void *srcAddr, const void *destAddr, size_t blockSize);
 bool DMAC_ChannelIsBusy ( DMAC_CHANNEL channel );
@@ -93,12 +82,5 @@ void DMAC_ChannelSuspend ( DMAC_CHANNEL channel );
 void DMAC_ChannelResume ( DMAC_CHANNEL channel );
 DMAC_TRANSFER_EVENT DMAC_ChannelTransferStatusGet(DMAC_CHANNEL channel);
 
-// DOM-IGNORE-BEGIN
-#ifdef __cplusplus  // Provide C++ Compatibility
-
-    }
-
-#endif
-// DOM-IGNORE-END
 
 #endif //PLIB_DMAC_H

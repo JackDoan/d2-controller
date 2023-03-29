@@ -252,7 +252,7 @@ int SERCOM_USART_ReadByte(sercom_registers_t* sercom) {
 }
 
 
-static void SERCOM0_USART_ISR_ERR_Handler(sercom_registers_t* sercom) {
+static void SERCOM_USART_ISR_ERR_Handler(sercom_registers_t* sercom) {
     USART_ERROR errorStatus = USART_ERROR_NONE;
     SERCOM_USART_OBJECT* obj = get_object(sercom);
     errorStatus = (USART_ERROR) (sercom->USART_INT.SERCOM_STATUS & (uint16_t)(SERCOM_USART_INT_STATUS_PERR_Msk | SERCOM_USART_INT_STATUS_FERR_Msk | SERCOM_USART_INT_STATUS_BUFOVF_Msk));
@@ -276,7 +276,7 @@ static void SERCOM0_USART_ISR_ERR_Handler(sercom_registers_t* sercom) {
     }
 }
 
-static void SERCOM0_USART_ISR_RX_Handler(sercom_registers_t* sercom){
+static void SERCOM_USART_ISR_RX_Handler(sercom_registers_t* sercom){
     SERCOM_USART_OBJECT* obj = get_object(sercom);
     if(obj->rxBusyStatus != true)
         return;
@@ -352,7 +352,7 @@ void SERCOM_USART_RX_Wait(sercom_registers_t* sercom) {
     while(SERCOM_USART_ReadIsBusy(sercom)) {}
 }
 
-static void SERCOM0_USART_ISR_TX_Handler(sercom_registers_t* sercom) {
+static void SERCOM_USART_ISR_TX_Handler(sercom_registers_t* sercom) {
     SERCOM_USART_OBJECT* obj = get_object(sercom);
     if(obj->txBusyStatus != true)
         return;
@@ -379,7 +379,7 @@ static void SERCOM_USART_InterruptHandler(sercom_registers_t* sercom) {
         testCondition = ((sercom->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_ERROR_Msk) == SERCOM_USART_INT_INTFLAG_ERROR_Msk);
         testCondition = ((sercom->USART_INT.SERCOM_INTENSET & SERCOM_USART_INT_INTENSET_ERROR_Msk) == SERCOM_USART_INT_INTENSET_ERROR_Msk) && testCondition;
         if(testCondition) {
-            SERCOM0_USART_ISR_ERR_Handler(sercom);
+            SERCOM_USART_ISR_ERR_Handler(sercom);
         }
 
         //todo see if RX actually needs to be handled first?
@@ -387,14 +387,14 @@ static void SERCOM_USART_InterruptHandler(sercom_registers_t* sercom) {
         testCondition = ((sercom->USART_INT.SERCOM_INTENSET & SERCOM_USART_INT_INTENSET_DRE_Msk) == SERCOM_USART_INT_INTENSET_DRE_Msk) && testCondition;
         /* Checks for data register empty flag */
         if(testCondition) {
-            SERCOM0_USART_ISR_TX_Handler(sercom);
+            SERCOM_USART_ISR_TX_Handler(sercom);
         }
 
         testCondition = ((sercom->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_RXC_Msk) == SERCOM_USART_INT_INTFLAG_RXC_Msk);
         testCondition = ((sercom->USART_INT.SERCOM_INTENSET & SERCOM_USART_INT_INTENSET_RXC_Msk) == SERCOM_USART_INT_INTENSET_RXC_Msk) && testCondition;
         /* Checks for receive complete empty flag */
         if(testCondition) {
-            SERCOM0_USART_ISR_RX_Handler(sercom);
+            SERCOM_USART_ISR_RX_Handler(sercom);
         }
 
     }
