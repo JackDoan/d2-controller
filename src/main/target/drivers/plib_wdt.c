@@ -16,7 +16,7 @@ void WDT_Enable(void) {
     WDT_REGS->WDT_CONFIG = WDT_CONFIG_PER_CYC1024;
     while(WDT_REGS->WDT_SYNCBUSY != 0U) {}
     /* Enable Watchdog Timer */
-    WDT_REGS->WDT_CTRLA |= (uint8_t)WDT_CTRLA_ENABLE_Msk;// | WDT_CTRLA_ALWAYSON_Msk;
+    WDT_REGS->WDT_CTRLA |= (uint8_t)WDT_CTRLA_ENABLE_Msk | WDT_CTRLA_ALWAYSON_Msk;
     while(WDT_REGS->WDT_SYNCBUSY != 0U) {}
 }
 
