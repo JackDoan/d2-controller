@@ -116,6 +116,7 @@ void packet_timer_watchdog_feed(void) {
     packet_timeout_counter = 0;
 }
 
+bool g_failsafe_print_stfu = false;
 void packet_timer_watchdog_tick(void) {
     static char packet_timer_watchdog_tick_buf[32] = {0};
     memset(packet_timer_watchdog_tick_buf, 0, sizeof(packet_timer_watchdog_tick_buf));
@@ -129,7 +130,7 @@ void packet_timer_watchdog_tick(void) {
         strcat(packet_timer_watchdog_tick_buf, "Packet timeout!\r\n");
         do_print = true;
     }
-    if(do_print) {
+    if(do_print & !g_failsafe_print_stfu) {
         serial_puts(packet_timer_watchdog_tick_buf);
     }
 }

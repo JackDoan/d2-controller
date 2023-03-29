@@ -68,6 +68,8 @@ struct sign_magnitude {
     uint32_t magnitude;
 };
 
+extern bool g_failsafe_print_stfu;
+
 void motor_enable(enum motor_channel channel, bool enable);
 struct motor_t* get_motor(enum motor_channel channel);
 void motor_cal(enum motor_channel channel, int sbus_val);

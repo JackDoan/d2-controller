@@ -53,7 +53,7 @@ void cmd_prompt(char cmd) {
             PORT_PinToggle(DIR3);
             break;
         case 's':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "1: %04x\r\n2: %04x\r\n3: %04x\r\n4: %04x\r\n",
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "1: %04x / 2: %04x / 3: %04x / 4: %04x\r\n",
                      L9958_Diag_Read(MOTOR1), L9958_Diag_Read(MOTOR2),
                      L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
             serial_puts(cmd_resp_buf);
@@ -64,8 +64,11 @@ void cmd_prompt(char cmd) {
         case 'P':
             fport_enable_printing(false);
             break;
+        case 'f':
+            g_failsafe_print_stfu = !g_failsafe_print_stfu;
+            break;
         case 'a':
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d\r\nTSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d / TSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
             serial_puts(cmd_resp_buf);
             break;
         case 't':
