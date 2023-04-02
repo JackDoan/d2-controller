@@ -13,7 +13,7 @@
 #include "plib_wdt.h"
 #include "plib_nvmctrl.h"
 
-char cmd_resp_buf[64] = {0};
+char cmd_resp_buf[128] = {0};
 
 void cmd_prompt(char cmd) {
     switch(cmd) {
@@ -58,14 +58,27 @@ void cmd_prompt(char cmd) {
                      L9958_Diag_Read(MOTOR3), L9958_Diag_Read(MOTOR4));
             serial_puts(cmd_resp_buf);
             break;
+        case 'q': {
+            struct packet_stats *stats = fport_get_stats();
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "B: %lu/%lu | P: %lu/%lu | CRC: %lu | EOF: %lu | RSSI: %lu | FS: %lu | sig: %lu | timeouts: %lu\r\n",
+                     stats->total_bytes, stats->discarded_bytes,
+                     stats->total_packets, stats->total_packets-stats->valid_packets,
+                     stats->crc_fail,
+                     stats->eof_fail,
+                     stats->rssi_invalid,
+                     stats->failsafe_active,
+                     stats->signal_loss,
+                     stats->packet_timeouts
+             );
+            serial_puts(cmd_resp_buf);
+            break;
+        }
+
         case 'p':
             fport_enable_printing(true);
             break;
         case 'P':
             fport_enable_printing(false);
-            break;
-        case 'f':
-            g_failsafe_print_stfu = !g_failsafe_print_stfu;
             break;
         case 'a':
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d / TSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
@@ -111,30 +124,26 @@ int main(void) {
     NVMCTRL_Initialize();
     PORT_Initialize();
     CLOCK_Initialize();
-    DMAC_Initialize();
-    fport_dma_register();
-    NVIC_Initialize();
-    SERCOM_USART_Initialize(RX);
-
     SYSTICK_TimerInitialize();
     SYSTICK_TimerStart();
-
+    DMAC_Initialize();
+    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
+    NVIC_Initialize();
     Timer_Init(TC2_REGS);
     TCC_PWMInitialize(TCC0_REGS);
     TCC_PWMInitialize(TCC1_REGS);
 
-    WDT_Enable();
-
-    DMAC_ChannelCallbackRegister(FTDI_DMA_CHANNEL, uartRxCallback, (uintptr_t) &ftdiRead);
-    SERCOM_USART_Initialize(FTDI);
-
-    L9958_Init();
-
     ADC0_Initialize();
     ADC0_Enable();
     ADC0_ConversionStart();
-
     TSENS_Init();
+    WDT_Enable();
+
+    SERCOM_USART_Initialize(FTDI);
+    SERCOM_USART_Initialize(RX);
+    fport_dma_register();
+
+    L9958_Init();
     //todo set PAC after configuring peripherals
     //todo configure brown-out detector
 
@@ -148,6 +157,7 @@ int main(void) {
         }
         L9958_Tick();
         WDT_ClearWithSync();
-        __WFI();
+        //__WFI();
+        SYSTICK_DelayMs(1);
     }
 }

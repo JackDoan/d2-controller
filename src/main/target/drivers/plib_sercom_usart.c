@@ -14,7 +14,8 @@
     SERCOM_USART_INT_CTRLA_DORD_Msk |           \
     SERCOM_USART_INT_CTRLA_IBON_Msk |           \
     SERCOM_USART_INT_CTRLA_FORM(0x0UL) |        \
-    SERCOM_USART_INT_CTRLA_SAMPR(0UL)           \
+    SERCOM_USART_INT_CTRLA_SAMPR(0UL)  |        \
+    SERCOM_USART_INT_CTRLA_RUNSTDBY(1) \
 )
 
 static SERCOM_USART_OBJECT ftdiUSARTObj = {
@@ -318,10 +319,14 @@ bool SERCOM_USART_Write_Nonblock(sercom_registers_t* sercom, void *buffer, const
     return true;
 }
 
+bool serial_busy(void) {
+    return DMAC_ChannelIsBusy(DMAC_CHANNEL_0);
+}
+
 void serial_puts(void *buffer) {
     //todo make this vararg?
     static char print_buf[128] = {0};
-    if(!DMAC_ChannelIsBusy(DMAC_CHANNEL_0)) {
+    if(!serial_busy()) {
 //        size_t len = snprintf(print_buf, sizeof(print_buf), "(%05ld) %s", SYSTICK_GetTickCounter(), (char*)buffer);
 
         size_t len = snprintf(print_buf, sizeof(print_buf), "%s", (char*)buffer);

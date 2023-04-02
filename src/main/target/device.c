@@ -3,6 +3,7 @@
 #include "device.h"
 #include "sercom_usart.h"
 #include "plib_nvmctrl.h"
+#include "rx/fport.h"
 
 static struct motor_t g_motors[] = {
         MOTOR_1_CONFIG,
@@ -116,23 +117,23 @@ void packet_timer_watchdog_feed(void) {
     packet_timeout_counter = 0;
 }
 
-bool g_failsafe_print_stfu = false;
 void packet_timer_watchdog_tick(void) {
-    static char packet_timer_watchdog_tick_buf[32] = {0};
-    memset(packet_timer_watchdog_tick_buf, 0, sizeof(packet_timer_watchdog_tick_buf));
-    bool do_print = false;
-    if(failsafe_active()) {
-        strcat(packet_timer_watchdog_tick_buf, "FAILSAFE\r\n");
-        do_print = true;
-    }
+//    static char packet_timer_watchdog_tick_buf[32] = {0};
+//    memset(packet_timer_watchdog_tick_buf, 0, sizeof(packet_timer_watchdog_tick_buf));
+//    bool do_print = false;
+//    if(failsafe_active()) {
+//        strcat(packet_timer_watchdog_tick_buf, "FAILSAFE\r\n");
+//        do_print = true;
+//    }
     if(packet_timeout_counter++ >= PACKET_TIMEOUT_MAX_COUNT) {
         failsafe_activate();
-        strcat(packet_timer_watchdog_tick_buf, "Packet timeout!\r\n");
-        do_print = true;
+        fport_packet_timeout_hit();
+//        strcat(packet_timer_watchdog_tick_buf, "Packet timeout!\r\n");
+//        do_print = true;
     }
-    if(do_print & !g_failsafe_print_stfu) {
-        serial_puts(packet_timer_watchdog_tick_buf);
-    }
+//    if(do_print & !g_failsafe_print_stfu) {
+//        serial_puts(packet_timer_watchdog_tick_buf);
+//    }
 }
 
 void fport_enable_tx(bool enable) {

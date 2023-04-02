@@ -7,6 +7,7 @@
 #include "plib_adc0.h"
 #include "l9958.h"
 #include "helpers.h"
+#include "fport_helpers.h"
 
 #define T1_FIRST_ID               0x0400 // -> 0004
 #define BATT_ID                   0xF104
@@ -17,6 +18,14 @@ enum fport_state {
 };
 
 static struct packet_stats g_packet_stats = {0};
+
+struct packet_stats* fport_get_stats(void) {
+    return &g_packet_stats;
+}
+
+void fport_packet_timeout_hit(void) {
+    g_packet_stats.packet_timeouts++;
+}
 
 static union fport_pkt fport_buf = {0};
 static uint8_t fport_idx = 0;
@@ -40,7 +49,15 @@ uint32_t fport_valid_byte_rate(void) {
 }
 
 static bool is_failsafe_pkt(uint8_t flags) {
-    return (flags & SBUS_FLAG_FAILSAFE_ACTIVE) || (flags & SBUS_FLAG_SIGNAL_LOSS);
+    if (flags & SBUS_FLAG_FAILSAFE_ACTIVE) {
+        g_packet_stats.failsafe_active++;
+        return true;
+    }
+    if (flags & SBUS_FLAG_SIGNAL_LOSS) {
+        g_packet_stats.signal_loss++;
+//        return true;
+    }
+    return false;
 }
 
 void fport_enable_printing(bool enable) {
@@ -48,7 +65,6 @@ void fport_enable_printing(bool enable) {
 }
 
 static bool fport_check_telemetry_packet(union fport_pkt* pkt) {
-    g_packet_stats.total_packets++;
     int length = pkt->ctrl.length + 1;
     uint8_t crc = frskyCheckSum(pkt->bytes, length);
     if(crc != pkt->bytes[length]) {
@@ -60,36 +76,10 @@ static bool fport_check_telemetry_packet(union fport_pkt* pkt) {
     return true;
 }
 
-void fport_tx_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
-    fport_enable_tx(false);
-}
-
-void fport_puts(const uint8_t* buffer) {
-    static char print_buf[64] = {0};
-    memset(print_buf, 0, sizeof(print_buf));
-    int print_buf_idx = 0;
-    for (unsigned int i = 0; i < sizeof (struct fport_telemetry); i++) {
-        uint8_t c = buffer[i];
-        if (c == FPORT_STUFF_MARK || c == FPORT_START_OF_FRAME) {
-            print_buf[print_buf_idx++] = FPORT_STUFF_MARK;
-            print_buf[print_buf_idx++] = c ^ FPORT_XOR_VAL;
-        } else {
-            print_buf[print_buf_idx++] = c;
-        }
-    }
-    if(!DMAC_ChannelIsBusy(FPORT_TX_DMA_CHANNEL)) {
-        fport_enable_tx(true);
-        DMAC_ChannelTransfer(FPORT_TX_DMA_CHANNEL, print_buf, (const void *)&RX->USART_INT.SERCOM_DATA, print_buf_idx);
-    }
-}
 
 static void fport_proc_telemetry_req(union fport_pkt *pkt) {
     //note: very timing sensitive. Don't remove the delay
     static uint8_t idx_to_send = 0;
-    if(fport_print) {
-        char fport_print_buf[64] = {0};
-        print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
-    }
     if(!fport_check_telemetry_packet(pkt)) {
         return;
     }
@@ -159,20 +149,21 @@ static void fport_proc_telemetry_req(union fport_pkt *pkt) {
     fport_puts(data.bytes);
 }
 
-static bool fport_check_control_packet(struct fport_frame *frame) {
-    g_packet_stats.total_packets++;
+static bool fport_check_control_packet(union fport_pkt* pkt) {
+    struct fport_frame *frame = &pkt->ctrl;
 
     uint8_t crc = frskyCheckSum((uint8_t*)frame, 28-2);
-    if(crc != frame->crc) {g_packet_stats.crc_fail++;
+    if(crc != frame->crc) {
+        g_packet_stats.crc_fail++;
         return false;
     }
 
-    if( (frame->rssi == 0) && is_failsafe_pkt(frame->flags)) {
+    if((frame->rssi == 0) && is_failsafe_pkt(frame->flags)) { //todo consider removing rssi==0 check
         goto good; //this is a valid packet, even with RSSI at 0
     }
 
     //todo better sanity checks, filters?
-    if(frame->rssi > 100 || frame->rssi < 10) {
+    if(frame->rssi > 100) {
         g_packet_stats.rssi_invalid++;
         return false;
     }
@@ -184,18 +175,17 @@ static bool fport_check_control_packet(struct fport_frame *frame) {
 }
 
 void fport_proc_packet(union fport_pkt* pkt) {
-    if(!fport_check_control_packet(&pkt->ctrl)) {
+    if(!fport_check_control_packet(pkt)) {
         return;
     }
 
     if(is_failsafe_pkt(pkt->ctrl.flags)) {
         failsafe_activate();
-        g_packet_stats.num_failsafes++;
         return;
     }
 //    bool chan17 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_17;
 //    bool chan18 = pkt->ctrl.flags & SBUS_FLAG_CHANNEL_18;
-    bool cal_switch = (pkt->ctrl.chan15 < 200) && (pkt->ctrl.chan15 > 50);
+    bool cal_switch = (pkt->ctrl.chan16 < 200) && (pkt->ctrl.chan16 > 50);
     if(cal_switch && (SYSTICK_GetTickCounter() < 5000)) {
         if(!fport_cal_mode) {
             for (enum motor_channel chan = 0; chan < MOTOR_COUNT; chan++) {
@@ -208,64 +198,26 @@ void fport_proc_packet(union fport_pkt* pkt) {
         }
         fport_cal_mode = true;
         motors_set_enable(false);
-    } else if (pkt->ctrl.chan15 > 200) {
-        if(fport_cal_mode) {
-            motor_cal_save();
-        }
-        fport_cal_mode = false;
+    } else if (fport_cal_mode && !cal_switch) {
+        motor_cal_save();
         motors_set_enable(true);
+        fport_cal_mode = false;
     }
 
-    if(fport_print) {
-        char fport_print_buf[128] = {0};
-//        if(!fport_cal_mode) {
-//            sprintf(fport_print_buf, "%04d %04d %04d %04d %04d %04d %02x 16:%d %03d %02x %lu %lu %lu %lu\r\n",
-//                sbus_to_duty_cycle(pkt->ctrl.chan0, TCC0_REGS->TCC_PER, &drive_sbus_params).magnitude,
-//                    pkt->ctrl.chan0,
-//                    pkt->ctrl.chan1,
-//                    pkt->ctrl.chan2,
-//                    pkt->ctrl.chan3,
-//
-//                    pkt->ctrl.chan4,
-//                    pkt->ctrl.chan5,
-//
-//                    pkt->ctrl.flags,
-//                    pkt->ctrl.chan15,
-//                    pkt->ctrl.rssi, pkt->ctrl.crc,
-//                    g_packet_stats.total_packets-g_packet_stats.valid_packets,
-//                    g_packet_stats.total_packets, g_packet_stats.discarded_bytes, g_packet_stats.total_bytes);
-//        }
-//        else {
-            sprintf(fport_print_buf, 
-                    "1: %04d %04d %04d / "
-                    "2: %04d %04d %04d / "
-                    "3: %04d %04d %04d / "
-                    "4: %04d %04d %04d\r\n",
-                    get_motor(MOTOR1)->sbus_config.max, get_motor(MOTOR1)->sbus_config.mid, get_motor(MOTOR1)->sbus_config.min,
-                    get_motor(MOTOR2)->sbus_config.max, get_motor(MOTOR2)->sbus_config.mid, get_motor(MOTOR2)->sbus_config.min,
-                    get_motor(MOTOR3)->sbus_config.max, get_motor(MOTOR3)->sbus_config.mid, get_motor(MOTOR3)->sbus_config.min,
-                    get_motor(MOTOR4)->sbus_config.max, get_motor(MOTOR4)->sbus_config.mid, get_motor(MOTOR4)->sbus_config.min);
-//        }
-        
-        serial_puts(fport_print_buf);
-//        print_hex(fport_print_buf, pkt, fport_idx);
-    }
     if (fport_cal_mode) {
-        motor_cal(MOTOR1, pkt->ctrl.chan0);
-        motor_cal(MOTOR2, pkt->ctrl.chan1);
-        motor_cal(MOTOR3, pkt->ctrl.chan2);
-        motor_cal(MOTOR4, pkt->ctrl.chan3);
+        motor_cal(MOTOR1, pkt->ctrl.chan1);
+        motor_cal(MOTOR2, pkt->ctrl.chan2);
+        motor_cal(MOTOR3, pkt->ctrl.chan3);
+        motor_cal(MOTOR4, pkt->ctrl.chan4);
     }
     else {
-        do_brakes(pkt->ctrl.chan4);
-        motor_set_speed(MOTOR1, pkt->ctrl.chan0);
-        motor_set_speed(MOTOR2, pkt->ctrl.chan1);
-        motor_set_speed(MOTOR3, pkt->ctrl.chan2);
-        motor_set_speed(MOTOR4, pkt->ctrl.chan3);
+        do_brakes(pkt->ctrl.chan5);
+        motor_set_speed(MOTOR1, pkt->ctrl.chan1);
+        motor_set_speed(MOTOR2, pkt->ctrl.chan2);
+        motor_set_speed(MOTOR3, pkt->ctrl.chan3);
+        motor_set_speed(MOTOR4, pkt->ctrl.chan4);
     }
 }
-
-
 
 static struct fport_dma_context g_context = {0};
 
@@ -279,10 +231,6 @@ void fport_dma_register(void) {
     fport_trigger(1);
 }
 
-uint8_t fport_dma_get_byte(void) {
-    return g_context.dma_rx[0];
-}
-
 void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
     struct fport_dma_context *context = (struct fport_dma_context*)contextHandle;
     g_packet_stats.total_bytes++;
@@ -291,7 +239,7 @@ void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
             if(context->dma_rx[0] == FPORT_START_OF_FRAME) {
                 state = FPORT_SOF;
                 if (fport_idx)
-                    g_packet_stats.discarded_bytes+= fport_idx;
+                    g_packet_stats.discarded_bytes += fport_idx;
                 fport_idx = 0;
                 fport_trigger(1);
                 return;
@@ -304,7 +252,7 @@ void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
                 fport_trigger(1);
                 return;
             }
-            fport_tick();
+            fport_tick(context->dma_rx[0]);
             break;
         }
         case DMAC_TRANSFER_EVENT_NONE:
@@ -314,9 +262,7 @@ void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
     }
 }
 
-
-void fport_tick(void) {
-    uint8_t x = fport_dma_get_byte();
+void fport_tick(uint8_t x) {
     switch(state) {
         case FPORT_SOF:
             if(x == 0x19 || x == 0x08) {
@@ -333,12 +279,17 @@ void fport_tick(void) {
             break;
         case FPORT_FOUND:
             fport_buf.bytes[fport_idx++] = x;
+            /*
+             * SOF L K  d1 d2 d3 d4 d5 d6 d7 d8 d9 d10d11d12d13d14d15d16d17d18d19d20D21d22FlgRSICRCEOF
+             * 7E 19 00 43 03 DE D0 D0 97 3E 56 4C 9C 15 AC 48 DF C4 93 07 3E F0 41 7B E2 00 0F E2 7E
+             */
             if(fport_idx >= (fport_buf.ctrl.length + 2)) {
-//                if(fport_print) {
-//                    char fport_print_buf[64] = {0};
-//                    print_hex(fport_print_buf, fport_buf.bytes, fport_idx);
-//                }
-                switch(fport_buf.ctrl.kind) { //todo if we're in pkt timeout, stop doing telemetry frames
+                g_packet_stats.total_packets++;
+                if (fport_print) {
+                    fport_debug_print(&fport_buf, fport_cal_mode);
+                }
+                switch(fport_buf.ctrl.kind) {
+                    //todo if we're in pkt timeout, stop doing telemetry frames
                     case 0:
                         fport_proc_packet(&fport_buf);
                         break;
