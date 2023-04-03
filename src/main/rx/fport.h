@@ -35,7 +35,7 @@ struct __attribute__((packed, aligned(1))) fport_frame {
     uint8_t flags;
     uint8_t rssi;
     uint8_t crc;
-    uint8_t eof;
+//    uint8_t eof;
 };
 
 struct __attribute__((packed, aligned(1))) fport_telemetry {
@@ -65,6 +65,7 @@ struct packet_stats {
     uint32_t failsafe_active;
     uint32_t signal_loss;
     uint32_t packet_timeouts;
+    uint32_t dma_error;
 };
 
 #define SBUS_FLAG_CHANNEL_17        (1 << 0)
@@ -74,6 +75,7 @@ struct packet_stats {
 
 void fport_tick(uint8_t x);
 void fport_enable_printing(bool enable);
+void fport_enable_printing_bytes(bool enable);
 uint32_t fport_valid_frame_rate(void);
 
 void fport_packet_timeout_hit(void);

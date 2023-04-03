@@ -35,7 +35,10 @@ static enum fport_state state = FPORT_SOF;
 struct fport_dma_context {
     bool byte_stuffed;
     uint8_t dma_rx[30];
+    bool print_bytes;
 };
+
+static struct fport_dma_context g_context = {0};
 
 
 uint32_t fport_valid_frame_rate(void) {
@@ -64,6 +67,10 @@ void fport_enable_printing(bool enable) {
     fport_print = enable;
 }
 
+void fport_enable_printing_bytes(bool enable) {
+    g_context.print_bytes = enable;
+}
+
 static bool fport_check_telemetry_packet(union fport_pkt* pkt) {
     int length = pkt->ctrl.length + 1;
     uint8_t crc = frskyCheckSum(pkt->bytes, length);
@@ -83,8 +90,7 @@ static void fport_proc_telemetry_req(union fport_pkt *pkt) {
     if(!fport_check_telemetry_packet(pkt)) {
         return;
     }
-
-    SYSTICK_DelayUs(800);  //this runs in the ISR context bc it's part of the DMA callback, I am very sorry
+    SYSTICK_DelayUs(1000);  //this runs in the ISR context bc it's part of the DMA callback, I am very sorry
 
     union fport_pkt data = {
         .tele.len = 0x8,
@@ -219,8 +225,6 @@ void fport_proc_packet(union fport_pkt* pkt) {
     }
 }
 
-static struct fport_dma_context g_context = {0};
-
 void fport_trigger(size_t len) {
     fport_gets(g_context.dma_rx, len);
 }
@@ -234,14 +238,16 @@ void fport_dma_register(void) {
 void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
     struct fport_dma_context *context = (struct fport_dma_context*)contextHandle;
     g_packet_stats.total_bytes++;
+//    if (context->print_bytes) {
+//        SERCOM_USART_WriteByte(FTDI, context->dma_rx[0]);
+//    }
+    fport_trigger(1);
     switch(event) {
         case DMAC_TRANSFER_EVENT_COMPLETE: {
             if(context->dma_rx[0] == FPORT_START_OF_FRAME) {
                 state = FPORT_SOF;
-                if (fport_idx)
-                    g_packet_stats.discarded_bytes += fport_idx;
+                g_packet_stats.discarded_bytes += fport_idx;
                 fport_idx = 0;
-                fport_trigger(1);
                 return;
             }
             if(context->byte_stuffed) {
@@ -249,7 +255,6 @@ void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
                 context->byte_stuffed = false;
             } else if(context->dma_rx[0] == FPORT_STUFF_MARK) {
                 context->byte_stuffed = true;
-                fport_trigger(1);
                 return;
             }
             fport_tick(context->dma_rx[0]);
@@ -258,6 +263,7 @@ void fport_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
         case DMAC_TRANSFER_EVENT_NONE:
         case DMAC_TRANSFER_EVENT_ERROR:
         default:
+            g_packet_stats.dma_error++;
             break;
     }
 }
@@ -309,5 +315,4 @@ void fport_tick(uint8_t x) {
             state = FPORT_SEEKING;
             break;
     }
-    fport_trigger(1);
 }

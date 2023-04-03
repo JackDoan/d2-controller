@@ -60,11 +60,11 @@ void cmd_prompt(char cmd) {
             break;
         case 'q': {
             struct packet_stats *stats = fport_get_stats();
-            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "B: %lu/%lu | P: %lu/%lu | CRC: %lu | EOF: %lu | RSSI: %lu | FS: %lu | sig: %lu | timeouts: %lu\r\n",
+            snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "B: %lu/%lu | P: %lu/%lu | CRC: %lu | DMA: %lu | RSSI: %lu | FS: %lu | sig: %lu | timeouts: %lu\r\n",
                      stats->total_bytes, stats->discarded_bytes,
                      stats->total_packets, stats->total_packets-stats->valid_packets,
                      stats->crc_fail,
-                     stats->eof_fail,
+                     stats->dma_error,
                      stats->rssi_invalid,
                      stats->failsafe_active,
                      stats->signal_loss,
@@ -76,9 +76,19 @@ void cmd_prompt(char cmd) {
 
         case 'p':
             fport_enable_printing(true);
+            fport_enable_printing_bytes(false);
             break;
         case 'P':
             fport_enable_printing(false);
+            fport_enable_printing_bytes(false);
+            break;
+        case 'o':
+            fport_enable_printing(false);
+            fport_enable_printing_bytes(true);
+            break;
+        case 'O':
+            fport_enable_printing(false);
+            fport_enable_printing_bytes(false);
             break;
         case 'a':
             snprintf(cmd_resp_buf, sizeof(cmd_resp_buf), "VBatt: %d / TSens: %lu\r\n", ADC0_Convert_mV(), TSENS_Get());
