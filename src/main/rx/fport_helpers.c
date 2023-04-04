@@ -43,7 +43,7 @@ void fport_debug_print(union fport_pkt* pkt, bool cal_mode) {
     }
 }
 
-void fport_tx_dma_callback(DMAC_TRANSFER_EVENT event, uintptr_t contextHandle) {
+void fport_tx_dma_callback(DMAC_TRANSFER_EVENT event __attribute__((unused)), uintptr_t contextHandle __attribute__((unused))) {
     fport_enable_tx(false);
 }
 

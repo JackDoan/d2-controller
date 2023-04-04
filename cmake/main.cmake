@@ -3,10 +3,6 @@ set(MAIN_INCLUDE_DIRS
         "${MAIN_SRC_DIR}"
         )
 
-set(MAIN_DEFINITIONS
-        __REVISION__="${GIT_REV}"
-        )
-
 set(MAIN_COMPILE_OPTIONS
         -Wall
         -Wextra

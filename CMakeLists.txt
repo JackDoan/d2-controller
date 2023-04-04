@@ -13,10 +13,6 @@ set(TOOLCHAIN "arm-none-eabi")
 
 option(COMPILER_VERSION_CHECK "Ensure the compiler matches the expected version" ON)
 
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-string(SUBSTRING ${GIT_SHA1} 0 8 GIT_REV)
-
 include(main)
 
 if(TOOLCHAIN STREQUAL none)
